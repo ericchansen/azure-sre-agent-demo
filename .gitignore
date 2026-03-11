@@ -1,0 +1,8 @@
+# Local-only notes and bug captures
+sre-agent-bug-report.md
+
+# Common local noise
+.env
+.env.*
+*.user
+*.log

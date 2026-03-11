@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "agentName": { "value": "webstore-sre-agent" },
+    "subscriptionId": { "value": "<YOUR_SUBSCRIPTION_ID>" },
+    "deploymentResourceGroupName": { "value": "rg-webstore-sre-agent" },
+    "location": { "value": "eastus2" },
+    "accessLevel": { "value": "High" },
+    "targetResourceGroups": { "value": ["rg-webstore-staging"] },
+    "targetSubscriptions": { "value": ["<YOUR_SUBSCRIPTION_ID>"] }
+  }
+}
