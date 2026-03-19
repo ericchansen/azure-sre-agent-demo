@@ -1,0 +1,71 @@
+name: "Demo: Break Checkout"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+
+# Required repository secrets:
+#   AZURE_CLIENT_ID       – App registration / federated credential client ID
+#   AZURE_TENANT_ID       – Entra ID tenant
+#   AZURE_SUBSCRIPTION_ID – Subscription containing the Container App
+#
+# Required repository variables:
+#   CONTAINER_APP_NAME    – e.g. webstore-staging
+#   RESOURCE_GROUP        – e.g. rg-webstore-staging
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  break-checkout:
+    name: Enable checkout failure
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set DEMO_BROKEN_CHECKOUT=true
+        run: |
+          echo "🔴 Breaking checkout on ${{ vars.CONTAINER_APP_NAME }}..."
+          az containerapp update \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --set-env-vars "DEMO_BROKEN_CHECKOUT=true"
+          echo "✅ Checkout failure enabled — orders will return 503"
+
+      - name: Wait for rollout
+        run: sleep 30
+
+      - name: Verify failure
+        run: |
+          APP_URL=$(az containerapp show \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+
+          echo "Testing https://${APP_URL}/api/orders ..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "https://${APP_URL}/api/orders" \
+            -H "Content-Type: application/json" \
+            -d '{"email":"test@example.com","firstName":"Test","lastName":"User","address":"123 Main St","city":"Test","state":"WA","zip":"98101","items":[{"productId":"1","name":"Test","price":10,"quantity":1}],"subtotal":10,"shippingCost":0,"tax":0.80,"total":10.80}')
+
+          echo "Response status: $STATUS"
+          if [ "$STATUS" = "503" ]; then
+            echo "✅ Checkout is broken as expected"
+          else
+            echo "⚠️ Expected 503, got $STATUS"
+            exit 1
+          fi

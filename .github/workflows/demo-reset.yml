@@ -1,0 +1,74 @@
+name: "Demo: Reset Checkout"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+
+# Required repository secrets:
+#   AZURE_CLIENT_ID       – App registration / federated credential client ID
+#   AZURE_TENANT_ID       – Entra ID tenant
+#   AZURE_SUBSCRIPTION_ID – Subscription containing the Container App
+#
+# Required repository variables:
+#   CONTAINER_APP_NAME    – e.g. webstore-staging
+#   RESOURCE_GROUP        – e.g. rg-webstore-staging
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  reset-checkout:
+    name: Restore healthy checkout
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Remove DEMO_BROKEN_CHECKOUT
+        run: |
+          echo "🟢 Resetting checkout on ${{ vars.CONTAINER_APP_NAME }}..."
+          az containerapp update \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --set-env-vars "DEMO_BROKEN_CHECKOUT=false"
+          echo "✅ Checkout restored to healthy state"
+
+      - name: Wait for rollout
+        run: sleep 30
+
+      - name: Verify recovery
+        run: |
+          APP_URL=$(az containerapp show \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+
+          echo "Testing https://${APP_URL}/api/health ..."
+          HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "https://${APP_URL}/api/health")
+          echo "Health status: $HEALTH"
+
+          echo "Testing https://${APP_URL}/api/orders ..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "https://${APP_URL}/api/orders" \
+            -H "Content-Type: application/json" \
+            -d '{"email":"test@example.com","firstName":"Test","lastName":"User","address":"123 Main St","city":"Test","state":"WA","zip":"98101","items":[{"productId":"1","name":"Test","price":10,"quantity":1}],"subtotal":10,"shippingCost":0,"tax":0.80,"total":10.80}')
+
+          echo "Orders status: $STATUS"
+          if [ "$STATUS" = "201" ]; then
+            echo "✅ Checkout is working again"
+          else
+            echo "⚠️ Expected 201, got $STATUS — checkout may still be impaired"
+          fi
