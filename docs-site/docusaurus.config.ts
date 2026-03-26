@@ -42,7 +42,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/social-card.png',
+    image: 'img/logo.svg',
     colorMode: {
       defaultMode: 'dark',
       respectPrefersColorScheme: true,
@@ -101,7 +101,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Built for AIOps talks. Powered by <a href="https://sre.azure.com/docs/" target="_blank">Azure SRE Agent</a>.`,
+      copyright: `Built for AIOps talks. Powered by <a href="https://sre.azure.com/docs/" target="_blank" rel="noopener noreferrer">Azure SRE Agent</a>.`,
     },
     prism: {
       theme: prismThemes.github,

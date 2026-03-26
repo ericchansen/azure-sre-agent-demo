@@ -1,6 +1,5 @@
 ---
 sidebar_position: 1
-slug: /overview
 title: Overview
 description: What this demo is, what it shows, and how the pieces fit together.
 ---

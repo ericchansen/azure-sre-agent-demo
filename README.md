@@ -109,7 +109,7 @@ This repo's GitHub Actions workflows need OIDC credentials for Azure:
 
 ### 4. Run the demo
 
-See the [**Demo script**](docs/demo-script.md) for a step-by-step walkthrough — what to click, what to show, and what to say.
+See the [**Demo script**](https://ericchansen.github.io/azure-sre-agent-demo/docs/demo-script) for a step-by-step walkthrough — what to click, what to show, and what to say.
 
 ---
 
@@ -142,12 +142,14 @@ gh workflow run "Demo: Reset Checkout" -f environment=staging
 
 ```
 ├── README.md                          ← you are here
-├── docs/
-│   └── demo-script.md                 ← step-by-step presenter guide
+├── docs-site/                         ← Docusaurus documentation site
+│   ├── docs/                          ← markdown content (overview, demo script, etc.)
+│   └── src/                           ← landing page, custom CSS
 ├── .github/
 │   └── workflows/
 │       ├── demo-break.yml             ← break checkout (workflow dispatch)
-│       └── demo-reset.yml             ← reset checkout (workflow dispatch)
+│       ├── demo-reset.yml             ← reset checkout (workflow dispatch)
+│       └── deploy-docs.yml            ← auto-deploy docs to GitHub Pages
 └── infra/
     └── sre-agent/
         ├── README.md                  ← Bicep deployment guide
