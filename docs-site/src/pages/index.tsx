@@ -93,7 +93,9 @@ function FeaturesSection() {
                 <div className="feature-icon">{f.icon}</div>
                 <Heading as="h3">{f.title}</Heading>
                 <p>{f.description}</p>
-                <Link href={f.link} style={{fontWeight: 600}}>
+                <Link
+                  {...(f.link.startsWith('/') ? {to: f.link} : {href: f.link})}
+                  style={{fontWeight: 600}}>
                   Learn more →
                 </Link>
               </div>
