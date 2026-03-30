@@ -24,24 +24,26 @@ az postgres flexible-server show \
   --query "state" -o tsv
 # Expected: "Ready"
 
-# Container App is responding
+# Container App is responding and database is connected
 curl -s https://<YOUR_APP_FQDN>/api/health | jq .
 # Expected: { "status": "ok", "database": { "status": "ok", ... } }
+```
 
-# Checkout is NOT left in broken state
-# ⚠️ First, grab a real product ID from the database (IDs are CUIDs, not integers)
-PRODUCT_ID=$(curl -s https://<YOUR_APP_FQDN>/api/products \
-  | jq -r '.[0].id')
-echo "Using product ID: $PRODUCT_ID"
+### Verify checkout works
 
-curl -s -o /dev/null -w "%{http_code}" \
-  -X POST "https://<YOUR_APP_FQDN>/api/orders" \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"test@example.com\",\"firstName\":\"Test\",\"lastName\":\"User\",\"address\":\"123 Main\",\"city\":\"Seattle\",\"state\":\"WA\",\"zip\":\"98101\",\"items\":[{\"productId\":\"${PRODUCT_ID}\",\"name\":\"Test\",\"price\":10,\"quantity\":1}],\"subtotal\":10,\"shippingCost\":0,\"tax\":0.80,\"total\":10.80}"
-# Expected: 201
-# ⚠️ Do NOT use a hardcoded productId like "1" — the seeded data uses
-#    CUIDs and a wrong ID will cause a 500 (Prisma P2003 foreign key error)
-#    that pollutes App Insights before the demo starts.
+The checkout test **must be done through the browser** — the webstore
+has no `/api/products` JSON endpoint, and product IDs are CUIDs generated
+at seed time, so hardcoded IDs in curl commands will fail with a 500
+(Prisma P2003 foreign key violation).
+
+1. Open `https://<YOUR_APP_FQDN>` in a browser
+2. Add any product to the cart
+3. Complete a checkout — confirm you see the order confirmation page
+4. If checkout returns an error, the `DEMO_BROKEN_CHECKOUT` env var may
+   still be set to `true` from a previous demo run. Reset it:
+
+```bash
+gh workflow run "Demo: Reset Checkout" -f environment=staging
 ```
 
 ### SRE Agent
