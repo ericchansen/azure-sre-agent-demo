@@ -26,14 +26,22 @@ az postgres flexible-server show \
 
 # Container App is responding
 curl -s https://<YOUR_APP_FQDN>/api/health | jq .
-# Expected: { "status": "healthy", ... }
+# Expected: { "status": "ok", "database": { "status": "ok", ... } }
 
 # Checkout is NOT left in broken state
+# ⚠️ First, grab a real product ID from the database (IDs are CUIDs, not integers)
+PRODUCT_ID=$(curl -s https://<YOUR_APP_FQDN>/api/products \
+  | jq -r '.[0].id')
+echo "Using product ID: $PRODUCT_ID"
+
 curl -s -o /dev/null -w "%{http_code}" \
   -X POST "https://<YOUR_APP_FQDN>/api/orders" \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","firstName":"Test","lastName":"User","address":"123 Main","city":"Seattle","state":"WA","zip":"98101","items":[{"productId":"1","name":"Test","price":10,"quantity":1}],"subtotal":10,"shippingCost":0,"tax":0.80,"total":10.80}'
+  -d "{\"email\":\"test@example.com\",\"firstName\":\"Test\",\"lastName\":\"User\",\"address\":\"123 Main\",\"city\":\"Seattle\",\"state\":\"WA\",\"zip\":\"98101\",\"items\":[{\"productId\":\"${PRODUCT_ID}\",\"name\":\"Test\",\"price\":10,\"quantity\":1}],\"subtotal\":10,\"shippingCost\":0,\"tax\":0.80,\"total\":10.80}"
 # Expected: 201
+# ⚠️ Do NOT use a hardcoded productId like "1" — the seeded data uses
+#    CUIDs and a wrong ID will cause a 500 (Prisma P2003 foreign key error)
+#    that pollutes App Insights before the demo starts.
 ```
 
 ### SRE Agent
