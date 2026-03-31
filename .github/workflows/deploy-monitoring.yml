@@ -7,7 +7,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'infra/monitoring/**'
+      - 'infra/monitoring/**/*.bicep'
+      - 'infra/monitoring/**/*parameters*.json'
   workflow_dispatch: # Allow manual trigger for initial deployment
 
 # Required repository secrets (same as demo workflows):
@@ -50,9 +51,13 @@ jobs:
 
       - name: Verify alert exists
         run: |
+          set -e
           ALERT=$(az monitor metrics alert show \
             --name "Failed Requests - appi-webstore-staging" \
             --resource-group "${{ vars.RESOURCE_GROUP }}" \
             --query "{name:name, enabled:enabled, severity:severity}" \
-            -o json 2>/dev/null || echo '{}')
+            -o json)
           echo "Alert status: $ALERT"
+          # Fail if the alert JSON is empty or missing the name field
+          echo "$ALERT" | jq -e '.name' > /dev/null || { echo "❌ Alert missing or malformed"; exit 1; }
+          echo "✅ Alert verified"
