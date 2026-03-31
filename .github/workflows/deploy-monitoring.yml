@@ -1,0 +1,58 @@
+name: Deploy Monitoring Infrastructure
+
+# Deploys alert rules to rg-webstore-staging when monitoring Bicep changes.
+# Uses the same OIDC auth pattern as demo-break.yml / demo-reset.yml.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/monitoring/**'
+  workflow_dispatch: # Allow manual trigger for initial deployment
+
+# Required repository secrets (same as demo workflows):
+#   AZURE_CLIENT_ID       – App registration / federated credential client ID
+#   AZURE_TENANT_ID       – Entra ID tenant
+#   AZURE_SUBSCRIPTION_ID – Subscription containing the staging resources
+#
+# Required repository variables:
+#   RESOURCE_GROUP        – e.g. rg-webstore-staging
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-monitoring:
+    name: Deploy monitoring alerts
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy failed-requests alert
+        run: |
+          echo "📊 Deploying metric alert to ${{ vars.RESOURCE_GROUP }}..."
+          az deployment group create \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --template-file infra/monitoring/failed-requests-alert.bicep \
+            --parameters appInsightsName=appi-webstore-staging \
+            --name "monitoring-$(date +%Y%m%d-%H%M%S)"
+          echo "✅ Metric alert deployed"
+
+      - name: Verify alert exists
+        run: |
+          ALERT=$(az monitor metrics alert show \
+            --name "Failed Requests - appi-webstore-staging" \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --query "{name:name, enabled:enabled, severity:severity}" \
+            -o json 2>/dev/null || echo '{}')
+          echo "Alert status: $ALERT"
