@@ -42,9 +42,9 @@ at seed time, so hardcoded IDs in curl commands will fail with a 500
 4. If checkout returns an error, the `DEMO_BROKEN_CHECKOUT` env var may
    still be set to `true` from a previous demo run. Reset it:
 
-```bash
-gh workflow run "Demo: Reset Checkout" -f environment=staging
-```
+   ```bash
+   gh workflow run "Demo: Reset Checkout" -f environment=staging
+   ```
 
 ### SRE Agent
 
