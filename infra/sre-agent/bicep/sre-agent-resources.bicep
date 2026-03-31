@@ -103,6 +103,44 @@ resource failureAnomaliesSmartDetector 'Microsoft.AlertsManagement/smartDetector
   }
 }
 
+// Create a deterministic metric alert for failed requests
+// Unlike the ML-based Failure Anomalies detector, this fires reliably on low-traffic
+// demo apps — triggers when more than 3 failed requests occur in a 5-minute window.
+// This ensures the SRE Agent's incident response plan activates every time checkout breaks.
+resource failedRequestsMetricAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: 'Failed Requests - ${appInsightsName}'
+  location: 'Global'
+  properties: {
+    description: 'Fires when more than 3 failed requests occur in a 5-minute window. Designed for reliable demo triggering — the ML-based Failure Anomalies detector may not fire on low-traffic apps.'
+    severity: 3
+    enabled: true
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    scopes: [
+      applicationInsights.id
+    ]
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'FailedRequests'
+          metricName: 'requests/failed'
+          metricNamespace: 'microsoft.insights/components'
+          operator: 'GreaterThan'
+          threshold: 3
+          timeAggregation: 'Count'
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+    }
+    actions: [
+      {
+        actionGroupId: smartDetectionActionGroup.id
+      }
+    ]
+  }
+}
+
 // Create User-Assigned Managed Identity (only if not using existing one)
 #disable-next-line BCP073
 resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = if (shouldCreateManagedIdentity) {
