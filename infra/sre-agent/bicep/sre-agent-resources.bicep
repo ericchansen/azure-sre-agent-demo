@@ -128,7 +128,7 @@ resource failedRequestsMetricAlert 'Microsoft.Insights/metricAlerts@2018-03-01' 
           metricNamespace: 'microsoft.insights/components'
           operator: 'GreaterThan'
           threshold: 3
-          timeAggregation: 'Count'
+          timeAggregation: 'Total'
           criterionType: 'StaticThresholdCriterion'
         }
       ]
