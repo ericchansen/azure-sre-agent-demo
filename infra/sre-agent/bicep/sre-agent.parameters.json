@@ -5,7 +5,7 @@
     "agentName": { "value": "webstore-sre-agent" },
     "subscriptionId": { "value": "<YOUR_SUBSCRIPTION_ID>" },
     "deploymentResourceGroupName": { "value": "rg-webstore-sre-agent" },
-    "location": { "value": "eastus2" },
+    "location": { "value": "swedencentral" },
     "accessLevel": { "value": "High" },
     "targetResourceGroups": { "value": ["rg-webstore-demo", "rg-webstore-aks"] },
     "targetSubscriptions": { "value": ["<YOUR_SUBSCRIPTION_ID>"] }
