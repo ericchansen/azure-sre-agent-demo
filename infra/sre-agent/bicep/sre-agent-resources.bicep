@@ -104,10 +104,9 @@ resource failureAnomaliesSmartDetector 'Microsoft.AlertsManagement/smartDetector
 }
 
 // NOTE: The metric alert for failed webstore requests is NOT in this file.
-// It lives in infra/monitoring/failed-requests-alert.bicep and targets
-// the webstore App Insights resource (for example, appi-webstore-demo in
-// rg-webstore-demo),
-// not the agent's own App Insights created here.
+// It lives in scenarios/webstore-container-apps/infra/monitoring/failed-requests-alert.bicep
+// and targets the webstore App Insights resource (for example, appi-webstore-demo in
+// rg-webstore-demo), not the agent's own App Insights created here.
 
 // Create User-Assigned Managed Identity (only if not using existing one)
 #disable-next-line BCP073

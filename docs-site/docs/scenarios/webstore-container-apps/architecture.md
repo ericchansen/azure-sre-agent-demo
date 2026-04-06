@@ -80,8 +80,8 @@ Azure SRE Agent is available in [specific regions](https://sre.azure.com/docs/ge
 
 | Workflow | Repo | Purpose |
 |----------|------|---------|
-| `demo-break.yml` | azure-sre-agent-demo | Break checkout (workflow dispatch) |
-| `demo-reset.yml` | azure-sre-agent-demo | Restore checkout (workflow dispatch) |
+| `webstore-demo-break.yml` | azure-sre-agent-demo | Break checkout (workflow dispatch) |
+| `webstore-demo-reset.yml` | azure-sre-agent-demo | Restore checkout (workflow dispatch) |
 | `ci.yml` | webstore | Lint, typecheck, test on every push/PR |
 | `deploy.yml` | webstore | Build Docker image, push to ACR, update Container App |
 | `pr-staging.yml` | webstore | Ephemeral staging environments for PRs |

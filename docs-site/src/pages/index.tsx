@@ -13,7 +13,7 @@ function HeroSection() {
           across logs, metrics, and source code, and remediate it — all without human intervention.
         </p>
         <div className="hero-buttons">
-          <Link className="button button--primary button--lg" to="/docs/demo-script">
+          <Link className="button button--primary button--lg" to="/docs/scenarios/webstore-container-apps/demo-script">
             🎤 Demo Script
           </Link>
           <Link className="button button--outline button--lg" to="/docs/overview">
@@ -149,7 +149,7 @@ function CtaSection() {
         <Heading as="h2">Ready to run the demo?</Heading>
         <p>Follow the demo script for a step-by-step walkthrough with speaker notes.</p>
         <div className="hero-buttons">
-          <Link className="button button--primary button--lg" to="/docs/demo-script">
+          <Link className="button button--primary button--lg" to="/docs/scenarios/webstore-container-apps/demo-script">
             🎤 Open Demo Script
           </Link>
           <Link

@@ -11,3 +11,7 @@ sre-agent-bug-report.md
 docs-site/node_modules/
 docs-site/build/
 docs-site/.docusaurus/
+
+# Bicep compiled ARM templates (build artifacts)
+scenarios/*/infra/**/*.json
+!scenarios/*/infra/**/*.parameters.json

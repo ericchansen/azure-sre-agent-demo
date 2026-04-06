@@ -1,6 +1,6 @@
-# Azure SRE Agent Demo
+# Azure SRE Agent Demo Hub
 
-An end-to-end, live-demo environment showing [Azure SRE Agent](https://sre.azure.com/docs/overview) detecting and remediating a real application failure — automatically. Built for conference talks, internal show-and-tells, and hands-on workshops.
+A collection of end-to-end, live-demo environments showing [Azure SRE Agent](https://sre.azure.com/docs/overview) detecting and remediating real application failures — automatically. Built for conference talks, internal show-and-tells, and hands-on workshops.
 
 > 🌐 **[View the full documentation site →](https://ericchansen.github.io/azure-sre-agent-demo/)**
 
@@ -10,55 +10,37 @@ An end-to-end, live-demo environment showing [Azure SRE Agent](https://sre.azure
 
 ---
 
-## The story
+## Scenarios
 
-A live e-commerce storefront — **[Cacao & Co.](https://github.com/ericchansen/webstore)** — runs on Azure Container Apps, fully instrumented with OpenTelemetry. An Azure SRE Agent monitors the environment. During the demo:
+One SRE Agent instance (in `infra/sre-agent/`) monitors all demo resource groups. Each scenario is self-contained in its own directory under `scenarios/`.
 
-| Step | What happens | Who does it |
-|------|-------------|-------------|
-| **1. Healthy baseline** | Visitors browse products, add to cart, and complete checkout. Telemetry flows to Application Insights. | The app |
-| **2. Break checkout** | A "bad deployment" sets `DEMO_BROKEN_CHECKOUT=true`. The checkout API starts returning **503** with a 1.5 s delay while the rest of the site stays up. | You (one-click workflow) |
-| **3. Detection** | SRE Agent sees the spike in 503 errors and failed dependency calls in Application Insights. | Azure SRE Agent |
-| **4. Investigation** | The agent correlates logs, metrics, and traces. It maps the failure back to the source code via the [connected GitHub repo](https://sre.azure.com/docs/concepts/workspace-tools). | Azure SRE Agent |
-| **5. Remediation** | Depending on [run mode](https://sre.azure.com/docs/concepts/run-modes), the agent either **recommends** or **executes** a fix (rollback the env var). | Azure SRE Agent |
-| **6. Recovery** | Checkout returns to 201. Telemetry confirms the fix. | The app |
+| Scenario | Description | Workload | Key SRE Agent capabilities |
+|----------|-------------|----------|---------------------------|
+| **[Webstore: Container Apps](scenarios/webstore-container-apps/)** | Checkout API starts returning 503. Agent detects the spike, investigates App Insights traces, and rolls back the broken env var. | [Cacao & Co.](https://github.com/ericchansen/webstore) (Next.js on Azure Container Apps) | App Insights queries, GitHub code correlation, env var remediation |
+| **[AKS: Blue/Green Deployment](scenarios/aks-blue-green/)** | A "green" deployment is rolled out with a broken build. Agent detects the error rate spike, rolls back the Kubernetes Service selector to blue, and creates a GitHub Issue. | Stub Node.js app on AKS | `kubectl` tooling, Container Insights, GitHub issue creation |
 
-The failure and recovery are fully repeatable — run it as many times as you need.
+Want to add a scenario? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Azure SRE Agent  (eastus2)                                     │
-│  rg-webstore-sre-agent                                          │
-│                                                                 │
-│  ┌───────────────────────┐    ┌─────────────────────────────┐   │
-│  │  SRE Agent            │    │  Application Insights       │   │
-│  │  (Microsoft.App/      │    │  + Log Analytics Workspace  │   │
-│  │   agents)             │    │                             │   │
-│  └───────────┬───────────┘    └─────────────────────────────┘   │
-│              │  monitors & investigates                          │
-└──────────────┼──────────────────────────────────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Webstore Application  (centralus)                              │
-│  rg-webstore-demo                                               │
-│                                                                 │
-│  ┌───────────────┐  ┌────────────┐  ┌────────┐  ┌───────────┐  │
-│  │ Container App │  │ PostgreSQL │  │  ACR   │  │ Key Vault │  │
-│  │ (Next.js)     │  │ Flexible   │  │        │  │           │  │
-│  └───────────────┘  └────────────┘  └────────┘  └───────────┘  │
-│         │                                                       │
-│  ┌──────┴────────────────────────────────────────────────────┐  │
-│  │  OpenTelemetry  ──▶  Application Insights (telemetry)     │  │
-│  └───────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-```
+One SRE Agent (in `rg-webstore-sre-agent`, eastus2) monitors all demo resource groups. Its `targetResourceGroups` list grows as scenarios are added. Scenario-specific resources (app, monitoring alerts, runbooks) live under `scenarios/<name>/`.
 
-**Key telemetry flow:** The webstore sends requests, dependencies, and exceptions to Application Insights via the [Azure Monitor OpenTelemetry SDK](https://learn.microsoft.com/azure/azure-monitor/app/opentelemetry-enable). The SRE Agent queries that same App Insights instance to detect anomalies.
+```
+┌──────────────────────────────────────────────────────┐
+│  Azure SRE Agent  (eastus2)   rg-webstore-sre-agent  │
+└──────────────────┬───────────────────────────────────┘
+                   │  monitors all target RGs
+         ┌─────────┴──────────┐
+         ▼                    ▼
+┌─────────────────┐   ┌─────────────────┐
+│  rg-webstore-   │   │  rg-webstore-   │
+│  demo           │   │  aks (planned)  │
+│  (Container     │   │  (AKS cluster)  │
+│   Apps, Webstore│   └─────────────────┘
+└─────────────────┘        … more TBD
+```
 
 ---
 
@@ -66,7 +48,7 @@ The failure and recovery are fully repeatable — run it as many times as you ne
 
 | Repo | What it contains |
 |------|-----------------|
-| **[azure-sre-agent-demo](https://github.com/ericchansen/azure-sre-agent-demo)** (this repo) | SRE Agent Bicep templates, demo workflows, documentation |
+| **[azure-sre-agent-demo](https://github.com/ericchansen/azure-sre-agent-demo)** (this repo) | SRE Agent Bicep, scenario infra/runbooks/workflows, documentation hub |
 | **[webstore](https://github.com/ericchansen/webstore)** | Next.js e-commerce app with built-in failure mode, OpenTelemetry instrumentation, Docker + Azure Container Apps deployment |
 
 ---
@@ -78,73 +60,44 @@ The failure and recovery are fully repeatable — run it as many times as you ne
 - Azure subscription with `Contributor` role ([+ `User Access Administrator` for RBAC](https://sre.azure.com/docs/get-started/create-and-setup#prerequisites))
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) v2.60+
 - [GitHub CLI](https://cli.github.com/) (for workflow dispatch)
-- The [webstore](https://github.com/ericchansen/webstore) deployed to Azure Container Apps (see the webstore README)
 
 ### 1. Deploy the SRE Agent
 
 Follow the step-by-step guide in [`infra/sre-agent/README.md`](infra/sre-agent/README.md), or use the [portal wizard](https://sre.azure.com/docs/get-started/create-and-setup) at [sre.azure.com](https://sre.azure.com).
 
-### 2. Connect data sources
+### 2. Set up a scenario
 
-In the SRE Agent setup, connect:
-- **Code** → the [webstore](https://github.com/ericchansen/webstore) GitHub repo ([docs](https://sre.azure.com/docs/get-started/create-and-setup#connect-your-code-repository))
-- **Azure resources** → your demo resource group (for example, `rg-webstore-demo`) ([docs](https://sre.azure.com/docs/get-started/create-and-setup#add-azure-resource-access))
+Each scenario's `README.md` has its own setup guide, required variables, and demo instructions:
 
-### 3. Configure repo secrets & variables
+- **[Webstore: Container Apps](scenarios/webstore-container-apps/README.md)**
+- **[AKS: Blue/Green](scenarios/aks-blue-green/README.md)**
 
-This repo's GitHub Actions workflows need OIDC credentials for Azure:
+### 3. Run the demo
 
-**Secrets** (per environment):
-| Secret | Value |
-|--------|-------|
-| `AZURE_CLIENT_ID` | App registration client ID (federated credential) |
-| `AZURE_TENANT_ID` | Entra ID tenant ID |
-| `AZURE_SUBSCRIPTION_ID` | Subscription containing the Container App |
+See each scenario's demo script, or the [**full documentation site**](https://ericchansen.github.io/azure-sre-agent-demo/).
 
-**Variables** (per environment):
-| Variable | Example |
-|----------|---------|
-| `CONTAINER_APP_NAME` | `ca-webstore-demo` |
-| `RESOURCE_GROUP` | `rg-webstore-demo` |
-| `APP_INSIGHTS_NAME` | `appi-webstore-demo` |
-| `TEST_PRODUCT_ID` | Real seeded product CUID, e.g. `cm...` |
 
-**Repository-level variables** (not environment-scoped — set under *Settings → Secrets and variables → Actions → Variables*):
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `DEMO_WORKFLOW_ENVIRONMENT` | Selects the GitHub Actions environment used by deploy-monitoring. Must be repo-level (not environment-scoped) so it is available before the environment is resolved. | `demo` |
-
-> If your GitHub Actions environment is still named `staging`, you can keep using it during the migration. The repo now supports either `staging` or `demo` workflow inputs.
-
-### 4. Run the demo
-
-See the [**Demo script**](https://ericchansen.github.io/azure-sre-agent-demo/docs/demo-script) for a step-by-step walkthrough — what to click, what to show, and what to say.
 
 ---
 
 ## Demo workflows
 
-Two GitHub Actions workflows automate the break / fix cycle:
+Workflows are prefixed by scenario: `webstore-*`, `aks-*`, etc.
 
-### 🔴 [Demo: Break Checkout](.github/workflows/demo-break.yml)
-
-1. Generates 30 baseline requests (healthy signal for contrast)
-2. Sets `DEMO_BROKEN_CHECKOUT=true` on the Container App
-3. Polls until checkout returns **503**
-
-```bash
-gh workflow run "Demo: Break Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
-```
-
-If you have not set `TEST_PRODUCT_ID` on that GitHub environment yet, add `-f test_product_id=<YOUR_PRODUCT_CUID>`.
-
-### 🟢 [Demo: Reset Checkout](.github/workflows/demo-reset.yml)
-
-1. Sets `DEMO_BROKEN_CHECKOUT=false`
-2. Polls until checkout returns **201**
+| Workflow | Scenario | What it does |
+|----------|----------|-------------|
+| 🔴 [`webstore-demo-break`](.github/workflows/webstore-demo-break.yml) | Webstore | Sets `DEMO_BROKEN_CHECKOUT=true`, polls until checkout returns 503 |
+| 🟢 [`webstore-demo-reset`](.github/workflows/webstore-demo-reset.yml) | Webstore | Sets `DEMO_BROKEN_CHECKOUT=false`, polls until checkout returns 201 |
+| 📊 [`webstore-deploy-monitoring`](.github/workflows/webstore-deploy-monitoring.yml) | Webstore | Deploys the failed-requests metric alert to the demo resource group |
+| 🔴 [`aks-demo-break`](.github/workflows/aks-demo-break.yml) *(coming soon)* | AKS | Patches Service selector to green (broken) deployment |
+| 🟢 [`aks-demo-reset`](.github/workflows/aks-demo-reset.yml) *(coming soon)* | AKS | Patches Service selector back to blue (stable) deployment |
 
 ```bash
-gh workflow run "Demo: Reset Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
+# Webstore: break
+gh workflow run "Webstore Demo: Break Checkout" -f environment=demo
+
+# Webstore: reset
+gh workflow run "Webstore Demo: Reset Checkout" -f environment=demo
 ```
 
 ---
@@ -152,26 +105,38 @@ gh workflow run "Demo: Reset Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 ## Repository structure
 
 ```
-├── README.md                          ← you are here
-├── docs-site/                         ← Docusaurus documentation site
-│   ├── docs/                          ← markdown content (overview, demo script, etc.)
-│   └── src/                           ← landing page, custom CSS
-├── .github/
-│   └── workflows/
-│       ├── demo-break.yml             ← break checkout (workflow dispatch)
-│       ├── demo-reset.yml             ← reset checkout (workflow dispatch)
-│       └── deploy-docs.yml            ← auto-deploy docs to GitHub Pages
-└── infra/
-    └── sre-agent/
-        ├── README.md                  ← Bicep deployment guide
-        └── bicep/
-            ├── minimal-sre-agent.bicep
-            ├── sre-agent-resources.bicep
-            ├── role-assignments-minimal.bicep
-            ├── role-assignments-target.bicep
-            └── webstore-sre-agent.parameters.json
+├── README.md                              ← you are here
+├── CONTRIBUTING.md                        ← how to add a new scenario
+├── docs-site/                             ← Docusaurus documentation site
+├── infra/
+│   └── sre-agent/                         ← shared SRE Agent Bicep (one agent for all)
+│       ├── README.md
+│       └── bicep/
+│           ├── minimal-sre-agent.bicep
+│           ├── sre-agent-resources.bicep
+│           ├── role-assignments-minimal.bicep
+│           ├── role-assignments-target.bicep
+│           └── sre-agent.parameters.json  ← edit targetResourceGroups for your scenarios
+├── scenarios/
+│   ├── webstore-container-apps/           ← Scenario 1: webstore on Container Apps
+│   │   ├── README.md
+│   │   ├── infra/monitoring/              ← metric alert Bicep
+│   │   └── runbooks/                      ← investigation runbooks
+│   └── aks-blue-green/                    ← Scenario 2: AKS blue/green (coming soon)
+│       ├── README.md
+│       ├── app/                           ← stub Node.js app + Dockerfile
+│       ├── infra/                         ← AKS cluster Bicep + alert
+│       ├── k8s/                           ← blue/green Deployments + Service
+│       └── runbooks/
+└── .github/
+    └── workflows/
+        ├── webstore-demo-break.yml
+        ├── webstore-demo-reset.yml
+        ├── webstore-deploy-monitoring.yml
+        ├── aks-demo-break.yml
+        ├── aks-demo-reset.yml
+        └── deploy-docs.yml
 ```
-
 ---
 
 ## How Azure SRE Agent works (for presenters)
