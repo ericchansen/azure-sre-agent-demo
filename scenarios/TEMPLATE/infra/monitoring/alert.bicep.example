@@ -1,14 +1,59 @@
-# Monitoring Alert — `<Scenario Name>`
+// Monitoring alert template for a new scenario.
+// Copy this file, rename to alert.bicep (or a descriptive name), and fill in the placeholders.
+//
+// Deploy:
+//   az deployment group create \
+//     --resource-group rg-<scenario-slug> \
+//     --template-file scenarios/<scenario-slug>/infra/monitoring/alert.bicep \
+//     --parameters appInsightsName=<APP_INSIGHTS_NAME>
 
-<!-- Replace this with the actual alert description. -->
+@description('Name of the metric alert to create.')
+param alertName string = 'alert-<scenario-slug>'
 
-A Bicep template that creates a metric alert targeting this scenario's App Insights resource.
+@description('Name of the existing Application Insights component to monitor.')
+param appInsightsName string
 
-## Deployment
+@description('Azure region for the alert resource.')
+param location string = resourceGroup().location
 
-```bash
-az deployment group create \
-  --resource-group rg-<scenario-slug> \
-  --template-file scenarios/<scenario-slug>/infra/monitoring/alert.bicep \
-  --parameters appInsightsName=<APP_INSIGHTS_NAME>
-```
+@description('Alert severity: 0=Critical, 1=Error, 2=Warning, 3=Info, 4=Verbose')
+@allowed([0, 1, 2, 3, 4])
+param severity int = 2
+
+@description('Threshold count for the selected metric.')
+param threshold int = 1
+
+resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
+  name: appInsightsName
+}
+
+resource metricAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: alertName
+  location: 'global'
+  properties: {
+    description: 'Fires when the scenario app returns more than ${threshold} failed request(s) in 1 minute.'
+    severity: severity
+    enabled: true
+    scopes: [appInsights.id]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT1M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'HighFailedRequests'
+          criterionType: 'StaticThresholdCriterion'
+          metricName: 'requests/failed'
+          // NOTE: requests/failed only supports Count aggregation — do not use Total
+          timeAggregation: 'Count'
+          operator: 'GreaterThan'
+          threshold: threshold
+        }
+      ]
+    }
+    autoMitigate: true
+  }
+}
+
+output alertId string = metricAlert.id
+output alertName string = metricAlert.name

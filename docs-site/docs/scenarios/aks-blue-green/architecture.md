@@ -18,8 +18,9 @@ description: How the AKS blue/green demo scenario works with Azure SRE Agent.
 │   │   ┌──────────────────┐     ┌──────────────────────┐       │      │
 │   │   │  webstore-blue   │     │  webstore-green      │       │      │
 │   │   │  version: blue   │     │  version: green      │       │      │
-│   │   │  (stable)        │     │  (BROKEN_CHECKOUT=   │       │      │
-│   │   │  → 201 ✅         │     │   true → 503 ❌)      │       │      │
+│   │   │  (stable)        │     │  (DEMO_BROKEN_       │       │      │
+│   │   │  → 201 ✅         │     │   CHECKOUT=true       │       │      │
+│   │   │                  │     │   → 503 ❌)            │       │      │
 │   │   └──────────────────┘     └──────────────────────┘       │      │
 │   │           │  ← selector: version=blue (default)            │      │
 │   │           ▼                                                │      │

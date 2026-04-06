@@ -25,11 +25,11 @@ Want to add a scenario? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Architecture
 
-One SRE Agent (in `rg-webstore-sre-agent`, eastus2) monitors all demo resource groups. Its `targetResourceGroups` list grows as scenarios are added. Scenario-specific resources (app, monitoring alerts, runbooks) live under `scenarios/<name>/`.
+One SRE Agent (in `rg-webstore-sre-agent`, swedencentral) monitors all demo resource groups. Its `targetResourceGroups` list grows as scenarios are added. Scenario-specific resources (app, monitoring alerts, runbooks) live under `scenarios/<name>/`.
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  Azure SRE Agent  (eastus2)   rg-webstore-sre-agent  │
+│  Azure SRE Agent  (swedencentral)   rg-webstore-sre-agent  │
 └──────────────────┬───────────────────────────────────┘
                    │  monitors all target RGs
          ┌─────────┴──────────┐
@@ -122,7 +122,7 @@ gh workflow run "Webstore: Reset Checkout" -f environment=demo
 │   │   ├── README.md
 │   │   ├── infra/monitoring/              ← metric alert Bicep
 │   │   └── runbooks/                      ← investigation runbooks
-│   └── aks-blue-green/                    ← Scenario 2: AKS blue/green (coming soon)
+│   └── aks-blue-green/                    ← Scenario 2: AKS blue/green
 │       ├── README.md
 │       ├── app/                           ← stub Node.js app + Dockerfile
 │       ├── infra/                         ← AKS cluster Bicep + alert
