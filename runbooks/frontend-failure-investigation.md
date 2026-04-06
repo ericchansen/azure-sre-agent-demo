@@ -1,8 +1,8 @@
 # Runbook: Frontend Failure Investigation
 
 > **Scope:** Cocoa Co Webstore (Next.js on Azure Container Apps)  
-> **Environments:** `rg-webstore-staging`, `rg-webstore-prod`  
-> **Telemetry:** Application Insights (`appi-webstore-staging`)  
+> **Environment:** `rg-webstore-demo` (single demo environment — staging and prod have been consolidated)  
+> **Telemetry:** Application Insights (`appi-webstore-staging` in `rg-webstore-demo`)  
 > **Last validated:** 2026-03-31
 
 ## When to Use This Runbook
@@ -17,8 +17,8 @@
 
 | Requirement | Details |
 |-------------|---------|
-| Azure RBAC | Reader on `rg-webstore-staging` and/or `rg-webstore-prod` |
-| Application Insights | `appi-webstore-staging` (staging) — production currently has no App Insights |
+| Azure RBAC | Reader on `rg-webstore-demo` |
+| Application Insights | `appi-webstore-staging` (in `rg-webstore-demo`) — all telemetry-dependent steps require this resource |
 | Source code access | `ericchansen/webstore` GitHub repository |
 | Tools | Azure CLI, Application Insights query tools, GitHub access |
 
@@ -30,27 +30,38 @@
 
 ### Actions
 
-1. List resources in the affected resource group(s):
+1. List resources in the affected resource group:
    ```
-   az resource list --resource-group rg-webstore-staging --subscription <sub-id> --query "[].{name:name, type:type}" -o table
-   az resource list --resource-group rg-webstore-prod --subscription <sub-id> --query "[].{name:name, type:type}" -o table
+   az resource list --resource-group rg-webstore-demo --subscription <sub-id> --query "[].{name:name, type:type}" -o table
    ```
 2. Identify the key resources:
-   - **Container App:** `ca-webstore-staging` or `ca-webstore-prod`
-   - **Application Insights:** `appi-webstore-staging` (staging only)
-   - **PostgreSQL:** `psql-webstore-staging` or `psql-webstore-prod`
-   - **Container Registry:** `acrwebstorestaging` or `acrwebstoreprod`
+   - **Container App:** `ca-webstore-staging` (in `rg-webstore-demo`)
+   - **Application Insights:** `appi-webstore-staging`
+   - **PostgreSQL:** `psql-webstore-staging`
+   - **Container Registry:** `acrwebstorestaging`
 
 3. Confirm the Container App is running:
    ```
-   az containerapp show --name ca-webstore-staging --resource-group rg-webstore-staging --subscription <sub-id> \
+   az containerapp show --name ca-webstore-staging --resource-group rg-webstore-demo --subscription <sub-id> \
      --query "{name:name, fqdn:properties.configuration.ingress.fqdn, latestRevision:properties.latestRevisionName, runningStatus:properties.runningStatus, provisioningState:properties.provisioningState}" -o json
    ```
 
 ### Expected Output
 
 - `provisioningState: Succeeded`, `runningStatus: Running`
-- If the app is not running, escalate to the Container Apps restart/deployment runbook before continuing.
+- If the app is not running, do not continue with frontend investigation yet. First:
+  1. Capture the current app state (already done above — note `latestRevision` and `provisioningState`).
+  2. List revisions to identify whether a recent deployment introduced the issue:
+     ```
+     az containerapp revision list --name ca-webstore-staging --resource-group rg-webstore-demo --subscription <sub-id> \
+       --query "[].{name:name, active:properties.active, created:properties.createdTime, traffic:properties.trafficWeight, state:properties.runningState}" -o table
+     ```
+  3. If a bad deployment is suspected, roll traffic back to the last known-good revision:
+     ```
+     az containerapp ingress traffic set --name ca-webstore-staging --resource-group rg-webstore-demo --subscription <sub-id> \
+       --revision-weight <last-known-good-revision>=100
+     ```
+  4. Once the app is running again, resume this runbook from Step 2.
 
 ---
 
@@ -60,14 +71,20 @@
 
 ### Actions
 
-1. List metric alerts in the resource group:
+1. List metric alert **rules** in the resource group (shows definitions and thresholds, not fired instances):
    ```
-   az monitor metrics alert list --resource-group rg-webstore-staging --subscription <sub-id> -o json
+   az monitor metrics alert list --resource-group rg-webstore-demo --subscription <sub-id> -o json
    ```
 2. Note any alerts with `enabled: true` and review their:
    - Threshold and evaluation frequency
    - Scoped resource (should be the App Insights resource)
-   - Recent fire history
+   - Severity and criteria
+
+   > **Note:** `az monitor metrics alert list` shows alert rule definitions only — it does not show fired alert instances or history.
+
+3. Review active and historical fired alerts separately:
+   - **Azure Portal active alerts:** Portal → **Monitor** → **Alerts** → filter by subscription / resource group.
+   - **Azure Portal alert history:** Portal → **Monitor** → **Alerts** → **Alert history** tab → filter by time range and resource group.
 
 ### Key Alert: Failed Requests
 
@@ -83,6 +100,16 @@
 **Goal:** Understand the failure distribution by HTTP status code and by operation (endpoint).
 
 This is the most important diagnostic step. Use Application Insights `CorrelateTimeSeries` with the following data sets:
+
+> **How to execute these queries:**
+> - **SRE Agent:** pass the JSON directly as the `series` parameter to the `CorrelateTimeSeries` tool — this is the primary intended consumer.
+> - **Human / CLI:** use `az monitor app-insights query` with an equivalent KQL query, for example:
+>   ```bash
+>   az monitor app-insights query \
+>     --app appi-webstore-staging --resource-group rg-webstore-demo --subscription <sub-id> \
+>     --analytics-query "requests | where success == false | summarize count() by resultCode, bin(timestamp, 5m) | order by timestamp desc"
+>   ```
+> - **Azure Portal:** Portal → **Application Insights** → **Logs** → paste KQL directly.
 
 ### 3a — Failures by Result Code
 
@@ -386,7 +413,7 @@ az containerapp revision list --name <app> --resource-group <rg> --subscription 
 
 ### Get App Insights resource ID
 ```bash
-az resource show --name appi-webstore-staging --resource-group rg-webstore-staging \
+az resource show --name appi-webstore-staging --resource-group rg-webstore-demo \
   --resource-type Microsoft.Insights/components --subscription <sub-id> \
   --query id -o tsv
 ```
