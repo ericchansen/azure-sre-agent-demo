@@ -50,7 +50,18 @@ jobs:
 
       - name: Poll until checkout is healthy
         run: |
-          SVC_IP=$(kubectl get service webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          SVC_IP=""
+          echo "⏳ Waiting for webstore-svc external IP..."
+          for i in $(seq 1 20); do
+            SVC_IP=$(kubectl get service webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            [ -n "$SVC_IP" ] && break
+            echo "  check $i: not assigned yet"
+            sleep 5
+          done
+          if [ -z "$SVC_IP" ]; then
+            echo "⚠️  webstore-svc did not get an external IP within 100 seconds."
+            exit 1
+          fi
           echo "⏳ Polling /checkout until 201 appears..."
           for i in $(seq 1 20); do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://$SVC_IP/checkout")

@@ -1,4 +1,4 @@
-name: Deploy Monitoring Infrastructure
+name: "Webstore: Deploy Monitoring Infrastructure"
 
 # Deploys alert rules to the configured demo resource group when monitoring Bicep changes.
 # Uses the same OIDC auth pattern as webstore-demo-break.yml / webstore-demo-reset.yml.

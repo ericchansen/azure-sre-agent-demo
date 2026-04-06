@@ -89,17 +89,30 @@ kubectl exec $GREEN_POD -- env | grep DEMO_BROKEN_CHECKOUT
 kubectl logs $GREEN_POD --tail=50
 ```
 
-### Check deployment history (Activity Log)
+### Check deployment history
 
-In the Azure Portal: **rg-webstore-aks → Activity log**. Look for a `patch service/webstore-svc` operation near the time the alert fired.
+The Service selector change is made via `kubectl`, which calls the Kubernetes API — it will **not** appear in the Azure Resource Group Activity Log (which tracks ARM operations only).
 
-Or via CLI:
+Instead, check these sources:
+
+**GitHub Actions run history** — the `aks-demo-break` workflow is the only thing that patches the Service:
 ```bash
-az monitor activity-log list \
-  --resource-group rg-webstore-aks \
-  --start-time $(date -u -d '1 hour ago' '+%Y-%m-%dT%H:%M:%SZ') \
-  --query "[?operationName.value=='Microsoft.ContainerService/managedClusters/write']" \
-  -o table
+gh run list --workflow aks-demo-break.yml --limit 5
+gh run view <run-id> --log
+```
+
+**Kubernetes Service events** — shows when the selector was last changed:
+```bash
+kubectl describe service webstore-svc
+```
+
+**Kubernetes audit logs** — if audit logging is enabled on the cluster, query via Log Analytics:
+```kusto
+AzureDiagnostics
+| where Category == "kube-audit"
+| where log_s contains "webstore-svc"
+| order by TimeGenerated desc
+| take 20
 ```
 
 ---

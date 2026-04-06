@@ -59,10 +59,10 @@ The SRE Agent is shared — see [`infra/sre-agent/`](../../infra/sre-agent/READM
 
 ```bash
 # Break checkout (generates baseline traffic, then breaks)
-gh workflow run "Webstore Demo: Break Checkout" -f environment=demo
+gh workflow run "Webstore: Break Checkout" -f environment=demo
 
 # Reset checkout
-gh workflow run "Webstore Demo: Reset Checkout" -f environment=demo
+gh workflow run "Webstore: Reset Checkout" -f environment=demo
 
 # Deploy monitoring alert
 gh workflow run "Webstore: Deploy Monitoring Infrastructure"

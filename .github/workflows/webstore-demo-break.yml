@@ -1,4 +1,4 @@
-name: "Demo: Break Checkout"
+name: "Webstore: Break Checkout"
 
 on:
   workflow_dispatch:
