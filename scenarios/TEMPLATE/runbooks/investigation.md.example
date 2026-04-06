@@ -1,0 +1,47 @@
+# `<Failure Mode>` Investigation Runbook
+
+<!-- Replace this with a real runbook. See other scenario runbooks for examples. -->
+
+**Scenario:** `<scenario-slug>`  
+**Failure mode:** `<what breaks>`  
+**Target resource group:** `rg-<scenario-slug>`
+
+---
+
+## Symptoms
+
+- TODO: describe what the failure looks like (error codes, metrics, log patterns)
+
+---
+
+## Investigation steps
+
+### Step 1: Confirm the failure
+
+```bash
+# TODO: add verification command
+```
+
+### Step 2: Identify root cause
+
+```bash
+# TODO: add investigation query or command
+```
+
+---
+
+## Remediation
+
+```bash
+# TODO: add fix command
+```
+
+---
+
+## Expected SRE Agent behavior
+
+1. Agent acknowledges the Azure Monitor alert
+2. Agent runs `TODO` to gather context
+3. Agent proposes `TODO` as a remediation action
+4. (Review mode) You approve the action
+5. Agent confirms recovery

@@ -16,14 +16,14 @@ The webstore's telemetry (requests, traces, exceptions) flows to the Application
 
 ## Deployment
 
-Deployed automatically by the `deploy-monitoring.yml` GitHub Actions workflow on push to `main`. The workflow reads `RESOURCE_GROUP` and `APP_INSIGHTS_NAME` from GitHub Actions variables so the repo does not hardcode a specific environment name.
+Deployed automatically by the `webstore-deploy-monitoring.yml` GitHub Actions workflow on push to `main`. The workflow reads `RESOURCE_GROUP` and `APP_INSIGHTS_NAME` from GitHub Actions variables so the repo does not hardcode a specific environment name.
 
 Manual deployment:
 
 ```bash
 az deployment group create \
   --resource-group <YOUR_DEMO_RESOURCE_GROUP> \
-  --template-file infra/monitoring/failed-requests-alert.bicep \
+  --template-file scenarios/webstore-container-apps/infra/monitoring/failed-requests-alert.bicep \
   --parameters appInsightsName=<YOUR_APP_INSIGHTS_NAME>
 ```
 

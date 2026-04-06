@@ -1,0 +1,14 @@
+# Monitoring Alert — `<Scenario Name>`
+
+<!-- Replace this with the actual alert description. -->
+
+A Bicep template that creates a metric alert targeting this scenario's App Insights resource.
+
+## Deployment
+
+```bash
+az deployment group create \
+  --resource-group rg-<scenario-slug> \
+  --template-file scenarios/<scenario-slug>/infra/monitoring/alert.bicep \
+  --parameters appInsightsName=<APP_INSIGHTS_NAME>
+```
