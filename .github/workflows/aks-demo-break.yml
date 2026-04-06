@@ -1,0 +1,82 @@
+name: "AKS: Break Deployment"
+
+# Simulates a bad deployment by patching the webstore-svc Service selector from
+# version=blue (stable) to version=green (broken, DEMO_BROKEN_CHECKOUT=true).
+# This triggers an error rate spike that Azure SRE Agent will detect and investigate.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "GitHub Actions environment to run under"
+        required: false
+        default: "demo"
+
+# Required repository secrets (same OIDC pattern as webstore workflows):
+#   AZURE_CLIENT_ID       – App registration / federated credential client ID
+#   AZURE_TENANT_ID       – Entra ID tenant
+#   AZURE_SUBSCRIPTION_ID – Subscription containing the AKS cluster
+#
+# Required repository variables (set at repo level or environment level):
+#   AKS_CLUSTER_NAME    – e.g. aks-webstore-demo
+#   AKS_RESOURCE_GROUP  – e.g. rg-webstore-aks
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  aks-demo-break:
+    name: Break AKS deployment (switch to green)
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'demo' }}
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group "${{ vars.AKS_RESOURCE_GROUP }}" \
+            --name "${{ vars.AKS_CLUSTER_NAME }}" \
+            --overwrite-existing
+
+      - name: Generate baseline traffic (healthy signal)
+        run: |
+          SVC_IP=$(kubectl get service webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "🚦 Sending 30 healthy requests to http://$SVC_IP/checkout for baseline..."
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null -w "%{http_code} " -X POST "http://$SVC_IP/checkout"
+          done
+          echo ""
+          echo "✅ Baseline traffic complete"
+
+      - name: Switch Service selector to green (broken)
+        run: |
+          echo "🔴 Patching webstore-svc selector to version=green..."
+          kubectl patch service webstore-svc \
+            -p '{"spec":{"selector":{"version":"green"}}}'
+          echo "✅ Service now routing to green (broken) deployment"
+
+      - name: Poll until errors are flowing
+        run: |
+          SVC_IP=$(kubectl get service webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "⏳ Polling /checkout until 503s appear..."
+          for i in $(seq 1 20); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://$SVC_IP/checkout")
+            echo "  attempt $i: HTTP $STATUS"
+            if [ "$STATUS" = "503" ]; then
+              echo "✅ Confirmed: checkout is returning 503"
+              echo ""
+              echo "🤖 Azure SRE Agent should detect the error spike within ~1 minute."
+              echo "   Watch the agent in the Azure Portal: https://portal.azure.com"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "⚠️  Checkout did not return 503 within 60 seconds — check the green deployment."
+          exit 1

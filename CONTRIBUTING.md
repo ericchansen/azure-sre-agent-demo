@@ -44,7 +44,7 @@ Use `scenarios/TEMPLATE/` as a starting point.
 | Azure resource group | `rg-<scenario-slug>` | `rg-webstore-aks` |
 | GitHub Actions workflows | `<slug>-demo-break.yml`, `<slug>-demo-reset.yml` | `aks-demo-break.yml` |
 | Workflow display names | `<Scenario>: Break …`, `<Scenario>: Reset …` | `AKS: Break Deployment` |
-| ACR image tags | `<slug>:<version>` | `aks-stub:v1-stable`, `aks-stub:v2-broken` |
+| ACR image tags | `<slug>:<version>` | `aks-stub:v1` (pushed to `acrwebstorestaging`) |
 | Docs pages | `docs-site/docs/scenarios/<slug>/architecture.md`, `demo-script.md` | |
 
 ---

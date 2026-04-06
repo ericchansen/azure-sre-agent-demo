@@ -79,8 +79,8 @@ const config: Config = {
           title: 'This Demo',
           items: [
             {label: 'Overview', to: '/docs/overview'},
-            {label: 'Demo Script', to: '/docs/demo-script'},
-            {label: 'Architecture', to: '/docs/architecture'},
+            {label: 'Webstore Demo Script', to: '/docs/scenarios/webstore-container-apps/demo-script'},
+            {label: 'Webstore Architecture', to: '/docs/scenarios/webstore-container-apps/architecture'},
           ],
         },
         {

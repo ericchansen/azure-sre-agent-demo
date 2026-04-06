@@ -3,9 +3,29 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   docsSidebar: [
     'overview',
-    'architecture',
     'getting-started',
-    'demo-script',
+    {
+      type: 'category',
+      label: 'Scenarios',
+      items: [
+        {
+          type: 'category',
+          label: 'Webstore: Container Apps',
+          items: [
+            'scenarios/webstore-container-apps/architecture',
+            'scenarios/webstore-container-apps/demo-script',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'AKS: Blue/Green Deployment',
+          items: [
+            'scenarios/aks-blue-green/architecture',
+            'scenarios/aks-blue-green/demo-script',
+          ],
+        },
+      ],
+    },
     {
       type: 'category',
       label: 'SRE Agent Concepts',

@@ -52,7 +52,7 @@ az group create \
 
 ### 3. Edit the parameters file
 
-Copy `bicep/webstore-sre-agent.parameters.json` and replace the placeholder values:
+Copy `bicep/sre-agent.parameters.json` and replace the placeholder values:
 
 | Parameter | What to set |
 |-----------|-------------|
@@ -70,7 +70,7 @@ Copy `bicep/webstore-sre-agent.parameters.json` and replace the placeholder valu
 az deployment sub create \
   --location eastus2 \
   --template-file bicep/minimal-sre-agent.bicep \
-  --parameters @bicep/webstore-sre-agent.parameters.json
+  --parameters @bicep/sre-agent.parameters.json
 ```
 
 The deployment takes 2–5 minutes. On success it outputs the agent name, portal URL, and identity details.
@@ -119,4 +119,4 @@ Both `appId` and `connectionString` must be included on any update, even if you'
 | `sre-agent-resources.bicep` | Main module — agent, identity, App Insights, RBAC, alert rules |
 | `role-assignments-minimal.bicep` | RBAC for the agent's own resource group |
 | `role-assignments-target.bicep` | RBAC for the monitored target resource group |
-| `webstore-sre-agent.parameters.json` | Example parameters (edit before deploying) |
+| `sre-agent.parameters.json` | Example parameters (edit before deploying) |

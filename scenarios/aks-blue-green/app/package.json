@@ -1,0 +1,12 @@
+{
+  "name": "aks-stub",
+  "version": "1.0.0",
+  "description": "Minimal stub app for Azure SRE Agent AKS blue/green demo",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@azure/monitor-opentelemetry": "^1.8.0"
+  }
+}

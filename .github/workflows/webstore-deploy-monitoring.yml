@@ -1,14 +1,14 @@
 name: Deploy Monitoring Infrastructure
 
 # Deploys alert rules to the configured demo resource group when monitoring Bicep changes.
-# Uses the same OIDC auth pattern as demo-break.yml / demo-reset.yml.
+# Uses the same OIDC auth pattern as webstore-demo-break.yml / webstore-demo-reset.yml.
 
 on:
   push:
     branches: [main]
     paths:
-      - 'infra/monitoring/**/*.bicep'
-      - 'infra/monitoring/**/*parameters*.json'
+      - 'scenarios/webstore-container-apps/infra/monitoring/**/*.bicep'
+      - 'scenarios/webstore-container-apps/infra/monitoring/**/*parameters*.json'
   workflow_dispatch: # Allow manual trigger for initial deployment
 
 # Required repository secrets (same as demo workflows):
@@ -58,7 +58,7 @@ jobs:
           echo "📊 Deploying metric alert to ${{ vars.RESOURCE_GROUP }}..."
           az deployment group create \
             --resource-group "${{ vars.RESOURCE_GROUP }}" \
-            --template-file infra/monitoring/failed-requests-alert.bicep \
+            --template-file scenarios/webstore-container-apps/infra/monitoring/failed-requests-alert.bicep \
             --parameters appInsightsName="$APP_INSIGHTS_NAME" \
             --name "monitoring-$(date +%Y%m%d-%H%M%S)"
           echo "✅ Metric alert deployed"

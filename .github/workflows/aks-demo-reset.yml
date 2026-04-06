@@ -1,0 +1,65 @@
+name: "AKS: Reset Deployment"
+
+# Resets the demo by patching the webstore-svc Service selector back to
+# version=blue (stable). Checkout should return 201 within ~30 seconds.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "GitHub Actions environment to run under"
+        required: false
+        default: "demo"
+
+# Required repository secrets:
+#   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
+#
+# Required repository variables:
+#   AKS_CLUSTER_NAME, AKS_RESOURCE_GROUP
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  aks-demo-reset:
+    name: Reset AKS deployment (switch back to blue)
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'demo' }}
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group "${{ vars.AKS_RESOURCE_GROUP }}" \
+            --name "${{ vars.AKS_CLUSTER_NAME }}" \
+            --overwrite-existing
+
+      - name: Switch Service selector back to blue (stable)
+        run: |
+          echo "🟢 Patching webstore-svc selector back to version=blue..."
+          kubectl patch service webstore-svc \
+            -p '{"spec":{"selector":{"version":"blue"}}}'
+          echo "✅ Service now routing to blue (stable) deployment"
+
+      - name: Poll until checkout is healthy
+        run: |
+          SVC_IP=$(kubectl get service webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "⏳ Polling /checkout until 201 appears..."
+          for i in $(seq 1 20); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://$SVC_IP/checkout")
+            echo "  attempt $i: HTTP $STATUS"
+            if [ "$STATUS" = "201" ]; then
+              echo "✅ Confirmed: checkout is healthy (201)"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "⚠️  Checkout did not return 201 within 60 seconds — check the blue deployment."
+          exit 1

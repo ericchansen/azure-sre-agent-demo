@@ -68,6 +68,6 @@ gh workflow run "Demo: Reset Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 
 ## Next steps
 
-- **[Architecture](./architecture)** — how the pieces connect
+- **[Architecture](./scenarios/webstore-container-apps/architecture)** — how the pieces connect
 - **[Getting Started](./getting-started)** — deploy the agent and configure workflows
-- **[Demo Script](./demo-script)** — step-by-step presenter guide with speaker notes
+- **[Demo Script](./scenarios/webstore-container-apps/demo-script)** — step-by-step presenter guide with speaker notes
