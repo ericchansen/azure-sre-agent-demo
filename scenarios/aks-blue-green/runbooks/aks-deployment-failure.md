@@ -133,6 +133,7 @@ Verify:
 kubectl get service webstore-svc -o jsonpath='{.spec.selector}'
 # Expected: {"app":"webstore","version":"blue"}
 
+SVC_IP=$(kubectl get service webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 curl -s -w "\nHTTP %{http_code}\n" -X POST "http://$SVC_IP/checkout"
 # Expected: HTTP 201
 ```

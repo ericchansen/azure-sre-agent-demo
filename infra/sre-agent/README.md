@@ -68,7 +68,7 @@ Copy `bicep/sre-agent.parameters.json` and replace the placeholder values:
 
 ```bash
 az deployment sub create \
-  --location eastus2 \
+  --location swedencentral \
   --template-file bicep/minimal-sre-agent.bicep \
   --parameters @bicep/sre-agent.parameters.json
 ```

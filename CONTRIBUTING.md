@@ -42,9 +42,9 @@ Use `scenarios/TEMPLATE/` as a starting point.
 |-------|-----------|---------|
 | Scenario slug | `kebab-case` | `aks-blue-green` |
 | Azure resource group | `rg-<scenario-slug>` | `rg-webstore-aks` |
-| GitHub Actions workflows | `<slug>-demo-break.yml`, `<slug>-demo-reset.yml` | `aks-demo-break.yml` |
+| GitHub Actions workflows | `<short-prefix>-demo-break.yml`, `<short-prefix>-demo-reset.yml` | `aks-demo-break.yml` |
 | Workflow display names | `<Scenario>: Break …`, `<Scenario>: Reset …` | `AKS: Break Deployment` |
-| ACR image tags | `<slug>:<version>` | `aks-stub:v1` (pushed to `acrwebstorestaging`) |
+| ACR image tags | `<short-prefix>:<version>` | `aks-stub:v1` (pushed to `acrwebstorestaging`) |
 | Docs pages | `docs-site/docs/scenarios/<slug>/architecture.md`, `demo-script.md` | |
 
 ---
@@ -75,7 +75,7 @@ Then redeploy the SRE Agent:
 
 ```bash
 az deployment sub create \
-  --location eastus2 \
+  --location swedencentral \
   --template-file infra/sre-agent/bicep/minimal-sre-agent.bicep \
   --parameters @infra/sre-agent/bicep/sre-agent.parameters.json
 ```
