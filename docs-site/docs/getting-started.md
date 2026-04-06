@@ -27,24 +27,28 @@ Azure SRE Agent deploys to: `eastus2`, `swedencentral`, `australiaeast`, `uksout
 After deployment, on the agent setup page:
 
 1. **Code** → click **+** → GitHub → select the [webstore](https://github.com/ericchansen/webstore) repo ([docs](https://sre.azure.com/docs/get-started/create-and-setup#connect-your-code-repository))
-2. **Azure resources** → Full setup tab → **+** → Resource groups → select `rg-webstore-staging` ([docs](https://sre.azure.com/docs/get-started/create-and-setup#add-azure-resource-access))
+2. **Azure resources** → Full setup tab → **+** → Resource groups → select your demo resource group (for example, `rg-webstore-demo`) ([docs](https://sre.azure.com/docs/get-started/create-and-setup#add-azure-resource-access))
 
-Verify in the agent chat: *"What Azure resources can you see in rg-webstore-staging?"*
+Verify in the agent chat: *"What Azure resources can you see in `<YOUR_DEMO_RESOURCE_GROUP>`?"*
 
 ## 3. Configure workflow secrets
 
-The demo workflows use [OIDC](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-azure) to authenticate. In **Settings → Environments → staging**:
+The demo workflows use [OIDC](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-azure) to authenticate. In **Settings → Environments → demo** (or `staging` while you are still migrating the GitHub environment name):
 
 | Secrets | Variables |
 |---------|-----------|
-| `AZURE_CLIENT_ID` — app registration client ID | `CONTAINER_APP_NAME` — e.g. `ca-webstore-staging` |
-| `AZURE_TENANT_ID` — Entra ID tenant | `RESOURCE_GROUP` — e.g. `rg-webstore-staging` |
+| `AZURE_CLIENT_ID` — app registration client ID | `CONTAINER_APP_NAME` — e.g. `ca-webstore-demo` |
+| `AZURE_TENANT_ID` — Entra ID tenant | `RESOURCE_GROUP` — e.g. `rg-webstore-demo` |
 | `AZURE_SUBSCRIPTION_ID` — target subscription | |
+| | `APP_INSIGHTS_NAME` — e.g. `appi-webstore-demo` |
+| | `TEST_PRODUCT_ID` — real seeded product CUID for checkout verification |
+
+`TEST_PRODUCT_ID` fixes the old hardcoded checkout payload bug. If you do not want to store it as an environment variable yet, you can pass `test_product_id` when you manually run the workflow.
 
 ## 4. Test
 
 ```bash
-gh workflow run "Demo: Break Checkout" -f environment=staging
+gh workflow run "Demo: Break Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 gh run watch
-gh workflow run "Demo: Reset Checkout" -f environment=staging
+gh workflow run "Demo: Reset Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 ```

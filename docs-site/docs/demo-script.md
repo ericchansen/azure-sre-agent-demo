@@ -19,8 +19,8 @@ Run through this checklist **the morning of** your presentation.
 ```bash
 # PostgreSQL is running
 az postgres flexible-server show \
-  --name psql-webstore-staging \
-  --resource-group rg-webstore-staging \
+  --name <YOUR_POSTGRES_SERVER_NAME> \
+  --resource-group <YOUR_DEMO_RESOURCE_GROUP> \
   --query "state" -o tsv
 # Expected: "Ready"
 
@@ -31,10 +31,10 @@ curl -s https://<YOUR_APP_FQDN>/api/health | jq .
 
 ### Verify checkout works
 
-The checkout test **must be done through the browser** — the webstore
-has no `/api/products` JSON endpoint, and product IDs are CUIDs generated
-at seed time, so hardcoded IDs in curl commands will fail with a 500
-(Prisma P2003 foreign key violation).
+For a quick presenter sanity check, use the browser. The GitHub Actions
+workflows now use a configured seeded product CUID (`TEST_PRODUCT_ID`)
+for their own verification, so they no longer rely on the broken
+hardcoded `productId: "1"` payload.
 
 1. Open `https://<YOUR_APP_FQDN>` in a browser
 2. Add any product to the cart
@@ -43,7 +43,7 @@ at seed time, so hardcoded IDs in curl commands will fail with a 500
    still be set to `true` from a previous demo run. Reset it:
 
    ```bash
-   gh workflow run "Demo: Reset Checkout" -f environment=staging
+   gh workflow run "Demo: Reset Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
    ```
 
 ### SRE Agent
@@ -51,7 +51,7 @@ at seed time, so hardcoded IDs in curl commands will fail with a 500
 1. Open [sre.azure.com](https://sre.azure.com) and navigate to your agent
 2. Confirm the agent is **Active** (not "Building Knowledge Graph")
 3. Confirm the **webstore** GitHub repo is connected under data sources
-4. Confirm `rg-webstore-staging` is listed under Azure resources
+4. Confirm `<YOUR_DEMO_RESOURCE_GROUP>` is listed under Azure resources
 
 ### Browser tabs (pre-open)
 
@@ -91,7 +91,7 @@ at seed time, so hardcoded IDs in curl commands will fail with a 500
 
 1. Switch to [sre.azure.com](https://sre.azure.com)
 2. Show the agent dashboard — connected resources, connected code repo
-3. Optionally ask: *"What Azure resources can you see in rg-webstore-staging?"*
+3. Optionally ask: *"What Azure resources can you see in `<YOUR_DEMO_RESOURCE_GROUP>`?"*
 
 :::tip Speaker notes
 > "This is Azure SRE Agent. It's connected to our Application Insights, our resource group, and the GitHub repo with the webstore source code. It's running in Review mode — it'll investigate autonomously but ask before taking action."
@@ -107,7 +107,7 @@ at seed time, so hardcoded IDs in curl commands will fail with a 500
 
 1. Switch to **GitHub Actions**
 2. Navigate to **"Demo: Break Checkout"**
-3. Click **Run workflow** → select **staging** → click **Run workflow**
+3. Click **Run workflow** → select your configured GitHub environment → click **Run workflow**
 
 :::tip Speaker notes
 > "I'm simulating a bad deployment. All this does is flip one environment variable — `DEMO_BROKEN_CHECKOUT=true`. The checkout API will start returning 503 with a simulated timeout, while the rest of the site stays perfectly healthy."
@@ -134,7 +134,7 @@ at seed time, so hardcoded IDs in curl commands will fail with a 500
 1. Switch to the **SRE Agent** tab
 2. The agent may start investigating automatically (if you've set up an [incident response plan](https://sre.azure.com/docs/capabilities/incident-response-plans)), or prompt it:
 
-> *"I'm seeing checkout failures on the webstore Container App in rg-webstore-staging. Can you investigate?"*
+> *"I'm seeing checkout failures on the webstore Container App in `<YOUR_DEMO_RESOURCE_GROUP>`. Can you investigate?"*
 
 3. Watch the reasoning chain:
    - Queries App Insights for recent exceptions and failed requests
@@ -161,7 +161,7 @@ at seed time, so hardcoded IDs in curl commands will fail with a 500
 6. **Approve** the agent's proposal if actionable, or:
 
 ```bash
-gh workflow run "Demo: Reset Checkout" -f environment=staging
+gh workflow run "Demo: Reset Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 ```
 
 ---
@@ -224,5 +224,5 @@ Use these throughout the demo or in Q&A:
 After the demo, make sure checkout is restored:
 
 ```bash
-gh workflow run "Demo: Reset Checkout" -f environment=staging
+gh workflow run "Demo: Reset Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 ```

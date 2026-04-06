@@ -1,6 +1,6 @@
 name: Deploy Monitoring Infrastructure
 
-# Deploys alert rules to rg-webstore-staging when monitoring Bicep changes.
+# Deploys alert rules to the configured demo resource group when monitoring Bicep changes.
 # Uses the same OIDC auth pattern as demo-break.yml / demo-reset.yml.
 
 on:
@@ -14,10 +14,11 @@ on:
 # Required repository secrets (same as demo workflows):
 #   AZURE_CLIENT_ID       – App registration / federated credential client ID
 #   AZURE_TENANT_ID       – Entra ID tenant
-#   AZURE_SUBSCRIPTION_ID – Subscription containing the staging resources
+#   AZURE_SUBSCRIPTION_ID – Subscription containing the demo resources
 #
 # Required repository variables:
-#   RESOURCE_GROUP        – e.g. rg-webstore-staging
+#   RESOURCE_GROUP        – e.g. rg-webstore-demo
+#   APP_INSIGHTS_NAME     – e.g. appi-webstore-demo
 
 permissions:
   id-token: write
@@ -27,7 +28,7 @@ jobs:
   deploy-monitoring:
     name: Deploy monitoring alerts
     runs-on: ubuntu-latest
-    environment: staging
+    environment: ${{ vars.DEMO_WORKFLOW_ENVIRONMENT != '' && vars.DEMO_WORKFLOW_ENVIRONMENT || 'staging' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,13 +40,22 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Resolve monitoring target
+        run: |
+          APP_INSIGHTS_NAME="${{ vars.APP_INSIGHTS_NAME }}"
+          if [ -z "$APP_INSIGHTS_NAME" ]; then
+            APP_INSIGHTS_NAME="appi-webstore-staging"
+            echo "⚠️ APP_INSIGHTS_NAME is not set; falling back to $APP_INSIGHTS_NAME"
+          fi
+          echo "APP_INSIGHTS_NAME=$APP_INSIGHTS_NAME" >> "$GITHUB_ENV"
+
       - name: Deploy failed-requests alert
         run: |
           echo "📊 Deploying metric alert to ${{ vars.RESOURCE_GROUP }}..."
           az deployment group create \
             --resource-group "${{ vars.RESOURCE_GROUP }}" \
             --template-file infra/monitoring/failed-requests-alert.bicep \
-            --parameters appInsightsName=appi-webstore-staging \
+            --parameters appInsightsName="$APP_INSIGHTS_NAME" \
             --name "monitoring-$(date +%Y%m%d-%H%M%S)"
           echo "✅ Metric alert deployed"
 
@@ -53,7 +63,7 @@ jobs:
         run: |
           set -e
           ALERT=$(az monitor metrics alert show \
-            --name "Failed Requests - appi-webstore-staging" \
+            --name "Failed Requests - $APP_INSIGHTS_NAME" \
             --resource-group "${{ vars.RESOURCE_GROUP }}" \
             --query "{name:name, enabled:enabled, severity:severity}" \
             -o json)

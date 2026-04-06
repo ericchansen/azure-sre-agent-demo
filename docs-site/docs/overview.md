@@ -54,7 +54,7 @@ Two GitHub Actions workflows automate the break / fix cycle:
 3. Polls until checkout returns **503**
 
 ```bash
-gh workflow run "Demo: Break Checkout" -f environment=staging
+gh workflow run "Demo: Break Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 ```
 
 ### 🟢 Demo: Reset Checkout
@@ -63,7 +63,7 @@ gh workflow run "Demo: Break Checkout" -f environment=staging
 2. Polls until checkout returns **201**
 
 ```bash
-gh workflow run "Demo: Reset Checkout" -f environment=staging
+gh workflow run "Demo: Reset Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 ```
 
 ## Next steps
