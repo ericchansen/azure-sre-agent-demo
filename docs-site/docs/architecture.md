@@ -24,7 +24,7 @@ description: How the webstore, Azure SRE Agent, and Application Insights connect
                ▼                               │ telemetry
 ┌──────────────────────────────────────────────┼──────────────────┐
 │  Webstore Application  (centralus)           │                  │
-│  rg-webstore-staging                         │                  │
+│  rg-webstore-demo                            │                  │
 │                                              │                  │
 │  ┌───────────────┐  ┌────────────┐  ┌────────┴──┐ ┌──────────┐ │
 │  │ Container App │  │ PostgreSQL │  │ App       │ │ Key Vault│ │
@@ -69,7 +69,7 @@ This creates a realistic "partial outage" scenario — exactly the kind of subtl
 
 | Resource Group | Region | Contains |
 |----------------|--------|----------|
-| `rg-webstore-staging` | centralus | Container App, PostgreSQL, ACR, Key Vault, App Insights (telemetry) |
+| `rg-webstore-demo` | centralus | Container App, PostgreSQL, ACR, Key Vault, App Insights (telemetry) |
 | `rg-webstore-sre-agent` | eastus2 | SRE Agent, App Insights (agent diagnostics), Log Analytics, Managed Identity |
 
 :::note Why different regions?

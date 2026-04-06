@@ -4,12 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Target environment"
+        description: "GitHub Actions environment"
         required: true
         default: "staging"
         type: choice
         options:
+          - demo
           - staging
+      test_product_id:
+        description: "Optional real product CUID used for checkout verification"
+        required: false
+        type: string
 
 # Required repository secrets:
 #   AZURE_CLIENT_ID       – App registration / federated credential client ID
@@ -17,8 +22,9 @@ on:
 #   AZURE_SUBSCRIPTION_ID – Subscription containing the Container App
 #
 # Required repository variables:
-#   CONTAINER_APP_NAME    – e.g. webstore-staging
-#   RESOURCE_GROUP        – e.g. rg-webstore-staging
+#   CONTAINER_APP_NAME    – e.g. ca-webstore-demo
+#   RESOURCE_GROUP        – e.g. rg-webstore-demo
+#   TEST_PRODUCT_ID       – real seeded product CUID (optional if passed as workflow input)
 
 permissions:
   id-token: write
@@ -37,6 +43,43 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Prepare checkout payload
+        run: |
+          set -euo pipefail
+          PRODUCT_ID="${{ inputs.test_product_id }}"
+          if [ -z "$PRODUCT_ID" ]; then
+            PRODUCT_ID="${{ vars.TEST_PRODUCT_ID }}"
+          fi
+
+          if [ -z "$PRODUCT_ID" ] || [ "$PRODUCT_ID" = "1" ]; then
+            echo "❌ Provide a real product CUID via the test_product_id workflow input or the TEST_PRODUCT_ID Actions variable."
+            exit 1
+          fi
+
+          cat > checkout-payload.json <<EOF
+          {
+            "email": "test@example.com",
+            "firstName": "Test",
+            "lastName": "User",
+            "address": "123 Main St",
+            "city": "Seattle",
+            "state": "WA",
+            "zip": "98101",
+            "items": [
+              {
+                "productId": "$PRODUCT_ID",
+                "name": "Demo Product",
+                "price": 10,
+                "quantity": 1
+              }
+            ],
+            "subtotal": 10,
+            "shippingCost": 0,
+            "tax": 0.80,
+            "total": 10.80
+          }
+          EOF
+
       - name: Reset checkout
         run: |
           echo "🟢 Resetting checkout on ${{ vars.CONTAINER_APP_NAME }}..."
@@ -47,6 +90,7 @@ jobs:
 
       - name: Verify recovery
         run: |
+          set -euo pipefail
           APP_URL=$(az containerapp show \
             --name "${{ vars.CONTAINER_APP_NAME }}" \
             --resource-group "${{ vars.RESOURCE_GROUP }}" \
@@ -56,7 +100,7 @@ jobs:
               --connect-timeout 5 --max-time 15 \
               -X POST "https://${APP_URL}/api/orders" \
               -H "Content-Type: application/json" \
-              -d '{"email":"test@example.com","firstName":"Test","lastName":"User","address":"123 Main St","city":"Test","state":"WA","zip":"98101","items":[{"productId":"1","name":"Test","price":10,"quantity":1}],"subtotal":10,"shippingCost":0,"tax":0.80,"total":10.80}')
+              --data @checkout-payload.json)
             echo "Attempt $i: HTTP $STATUS"
             [ "$STATUS" = "201" ] && echo "✅ Checkout is working again" && exit 0
             sleep 10

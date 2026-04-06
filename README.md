@@ -45,7 +45,7 @@ The failure and recovery are fully repeatable — run it as many times as you ne
                ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │  Webstore Application  (centralus)                              │
-│  rg-webstore-staging                                            │
+│  rg-webstore-demo                                               │
 │                                                                 │
 │  ┌───────────────┐  ┌────────────┐  ┌────────┐  ┌───────────┐  │
 │  │ Container App │  │ PostgreSQL │  │  ACR   │  │ Key Vault │  │
@@ -88,7 +88,7 @@ Follow the step-by-step guide in [`infra/sre-agent/README.md`](infra/sre-agent/R
 
 In the SRE Agent setup, connect:
 - **Code** → the [webstore](https://github.com/ericchansen/webstore) GitHub repo ([docs](https://sre.azure.com/docs/get-started/create-and-setup#connect-your-code-repository))
-- **Azure resources** → the `rg-webstore-staging` resource group ([docs](https://sre.azure.com/docs/get-started/create-and-setup#add-azure-resource-access))
+- **Azure resources** → your demo resource group (for example, `rg-webstore-demo`) ([docs](https://sre.azure.com/docs/get-started/create-and-setup#add-azure-resource-access))
 
 ### 3. Configure repo secrets & variables
 
@@ -104,8 +104,12 @@ This repo's GitHub Actions workflows need OIDC credentials for Azure:
 **Variables** (per environment):
 | Variable | Example |
 |----------|---------|
-| `CONTAINER_APP_NAME` | `ca-webstore-staging` |
-| `RESOURCE_GROUP` | `rg-webstore-staging` |
+| `CONTAINER_APP_NAME` | `ca-webstore-demo` |
+| `RESOURCE_GROUP` | `rg-webstore-demo` |
+| `APP_INSIGHTS_NAME` | `appi-webstore-demo` |
+| `TEST_PRODUCT_ID` | Real seeded product CUID, e.g. `cm...` |
+
+> If your GitHub Actions environment is still named `staging`, you can keep using it during the migration. The repo now supports either `staging` or `demo` workflow inputs.
 
 ### 4. Run the demo
 
@@ -124,8 +128,10 @@ Two GitHub Actions workflows automate the break / fix cycle:
 3. Polls until checkout returns **503**
 
 ```bash
-gh workflow run "Demo: Break Checkout" -f environment=staging
+gh workflow run "Demo: Break Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 ```
+
+If you have not set `TEST_PRODUCT_ID` on that GitHub environment yet, add `-f test_product_id=<YOUR_PRODUCT_CUID>`.
 
 ### 🟢 [Demo: Reset Checkout](.github/workflows/demo-reset.yml)
 
@@ -133,7 +139,7 @@ gh workflow run "Demo: Break Checkout" -f environment=staging
 2. Polls until checkout returns **201**
 
 ```bash
-gh workflow run "Demo: Reset Checkout" -f environment=staging
+gh workflow run "Demo: Reset Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 ```
 
 ---

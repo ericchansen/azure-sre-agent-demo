@@ -92,7 +92,7 @@ In the agent's portal blade:
 In the agent's chat interface, try:
 
 ```
-What Azure resources can you see in rg-webstore-staging?
+What Azure resources can you see in <YOUR_DEMO_RESOURCE_GROUP>?
 ```
 
 If the agent lists your resources, the knowledge graph and RBAC are working.

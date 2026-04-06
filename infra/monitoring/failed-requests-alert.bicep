@@ -1,5 +1,6 @@
-// Metric alert for failed webstore requests
-// Deploys to rg-webstore-staging, targeting appi-webstore-staging
+// Metric alert for failed webstore requests.
+// Deploys to your demo resource group, targeting the configured
+// Application Insights resource for the webstore.
 //
 // This is a deterministic threshold alert (>1 failed request in 1 min)
 // that fires near-instantly on low-traffic demo apps. The ML-based Failure
@@ -11,8 +12,8 @@
 
 targetScope = 'resourceGroup'
 
-@description('Name of the Application Insights resource to monitor')
-param appInsightsName string = 'appi-webstore-staging'
+@description('Name of the Application Insights resource to monitor, for example appi-webstore-demo')
+param appInsightsName string
 
 @description('Failure threshold — alert fires when failed requests exceed this count in the window')
 param failureThreshold int = 1
