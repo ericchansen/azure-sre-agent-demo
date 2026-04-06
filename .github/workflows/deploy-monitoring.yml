@@ -16,9 +16,13 @@ on:
 #   AZURE_TENANT_ID       – Entra ID tenant
 #   AZURE_SUBSCRIPTION_ID – Subscription containing the demo resources
 #
-# Required repository variables:
-#   RESOURCE_GROUP        – e.g. rg-webstore-demo
-#   APP_INSIGHTS_NAME     – e.g. appi-webstore-demo
+# Required repository variables (set at repo level, NOT environment-scoped):
+#   RESOURCE_GROUP           – e.g. rg-webstore-demo
+#   APP_INSIGHTS_NAME        – e.g. appi-webstore-demo
+#   DEMO_WORKFLOW_ENVIRONMENT – GitHub Actions environment to run under (e.g. 'demo').
+#                              MUST be a repository-level variable, not an environment-scoped
+#                              variable, because it is evaluated before the environment is
+#                              resolved. Defaults to 'staging' if unset.
 
 permissions:
   id-token: write
