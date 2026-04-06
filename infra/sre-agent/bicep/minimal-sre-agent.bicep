@@ -12,7 +12,7 @@ param deploymentResourceGroupName string
 
 @description('The location where the resources will be deployed')
 @allowed(['swedencentral', 'uksouth', 'eastus2', 'australiaeast'])
-param location string = 'eastus2'
+param location string = 'swedencentral'
 
 @description('Optional: The resource ID of an existing user-assigned managed identity. If not provided, a new one will be created.')
 param existingManagedIdentityId string = ''
