@@ -47,7 +47,18 @@ jobs:
 
       - name: Generate baseline traffic (healthy signal)
         run: |
-          SVC_IP=$(kubectl get service webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "⏳ Waiting for webstore-svc external IP..."
+          SVC_IP=""
+          for i in $(seq 1 20); do
+            SVC_IP=$(kubectl get service webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            [ -n "$SVC_IP" ] && break
+            echo "  check $i: not assigned yet"
+            sleep 5
+          done
+          if [ -z "$SVC_IP" ]; then
+            echo "⚠️  webstore-svc did not get an external IP within 100 seconds."
+            exit 1
+          fi
           echo "🚦 Sending 30 healthy requests to http://$SVC_IP/checkout for baseline..."
           for i in $(seq 1 30); do
             curl -s -o /dev/null -w "%{http_code} " -X POST "http://$SVC_IP/checkout"
@@ -65,6 +76,10 @@ jobs:
       - name: Poll until errors are flowing
         run: |
           SVC_IP=$(kubectl get service webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [ -z "$SVC_IP" ]; then
+            echo "⚠️  webstore-svc has no external IP — was the cluster provisioned correctly?"
+            exit 1
+          fi
           echo "⏳ Polling /checkout until 503s appear..."
           for i in $(seq 1 20); do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://$SVC_IP/checkout")

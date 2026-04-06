@@ -55,12 +55,52 @@ A "green" deployment of a stub Node.js app is rolled out to an AKS cluster. The 
 
 ---
 
-## Coming soon
+## Setup
 
-- [ ] Stub app (`app/`)
-- [ ] AKS Bicep (`infra/aks-cluster.bicep`)
-- [ ] Kubernetes manifests (`k8s/`)
-- [ ] Demo workflows (`aks-demo-break.yml`, `aks-demo-reset.yml`)
-- [ ] Runbook
-- [ ] Docs site pages
-- [ ] Azure provisioning
+### Prerequisites
+
+- AKS cluster deployed via `infra/aks-cluster.bicep` (resource group: `rg-webstore-aks`)
+- `acrwebstorestaging.azurecr.io/aks-stub:v1` image built and pushed
+- ACR pull access granted to AKS: `az aks update --attach-acr acrwebstorestaging ...`
+- GitHub Actions `demo` environment with variables `AKS_CLUSTER_NAME` and `AKS_RESOURCE_GROUP`
+
+### 1. Get cluster credentials
+
+```bash
+az aks get-credentials --resource-group rg-webstore-aks --name aks-webstore-demo
+```
+
+### 2. Create the App Insights secret
+
+The deployments read the Application Insights connection string from a Kubernetes Secret.
+Create it before applying the manifests:
+
+```bash
+kubectl create secret generic appi-connection-string \
+  --from-literal=connectionString="<APPLICATIONINSIGHTS_CONNECTION_STRING>"
+```
+
+Get the connection string from the Bicep deployment output:
+
+```bash
+az deployment group show \
+  --resource-group rg-webstore-aks \
+  --name <deployment-name> \
+  --query properties.outputs.appInsightsConnectionString.value -o tsv
+```
+
+### 3. Apply Kubernetes manifests
+
+```bash
+kubectl apply -f scenarios/aks-blue-green/k8s/
+```
+
+### 4. Deploy the metric alert
+
+```bash
+az deployment group create \
+  --resource-group rg-webstore-aks \
+  --template-file scenarios/aks-blue-green/infra/monitoring/aks-error-rate-alert.bicep \
+  --parameters appInsightsName=appi-aks-webstore-demo
+```
+

@@ -89,15 +89,15 @@ Workflows are prefixed by scenario: `webstore-*`, `aks-*`, etc.
 | 🔴 [`webstore-demo-break`](.github/workflows/webstore-demo-break.yml) | Webstore | Sets `DEMO_BROKEN_CHECKOUT=true`, polls until checkout returns 503 |
 | 🟢 [`webstore-demo-reset`](.github/workflows/webstore-demo-reset.yml) | Webstore | Sets `DEMO_BROKEN_CHECKOUT=false`, polls until checkout returns 201 |
 | 📊 [`webstore-deploy-monitoring`](.github/workflows/webstore-deploy-monitoring.yml) | Webstore | Deploys the failed-requests metric alert to the demo resource group |
-| 🔴 [`aks-demo-break`](.github/workflows/aks-demo-break.yml) *(coming soon)* | AKS | Patches Service selector to green (broken) deployment |
-| 🟢 [`aks-demo-reset`](.github/workflows/aks-demo-reset.yml) *(coming soon)* | AKS | Patches Service selector back to blue (stable) deployment |
+| 🔴 [`aks-demo-break`](.github/workflows/aks-demo-break.yml) | AKS | Patches Service selector to green (broken) deployment |
+| 🟢 [`aks-demo-reset`](.github/workflows/aks-demo-reset.yml) | AKS | Patches Service selector back to blue (stable) deployment |
 
 ```bash
 # Webstore: break
-gh workflow run "Webstore Demo: Break Checkout" -f environment=demo
+gh workflow run "Webstore: Break Checkout" -f environment=demo
 
 # Webstore: reset
-gh workflow run "Webstore Demo: Reset Checkout" -f environment=demo
+gh workflow run "Webstore: Reset Checkout" -f environment=demo
 ```
 
 ---
