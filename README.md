@@ -109,6 +109,11 @@ This repo's GitHub Actions workflows need OIDC credentials for Azure:
 | `APP_INSIGHTS_NAME` | `appi-webstore-demo` |
 | `TEST_PRODUCT_ID` | Real seeded product CUID, e.g. `cm...` |
 
+**Repository-level variables** (not environment-scoped — set under *Settings → Secrets and variables → Actions → Variables*):
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `DEMO_WORKFLOW_ENVIRONMENT` | Selects the GitHub Actions environment used by deploy-monitoring. Must be repo-level (not environment-scoped) so it is available before the environment is resolved. | `demo` |
+
 > If your GitHub Actions environment is still named `staging`, you can keep using it during the migration. The repo now supports either `staging` or `demo` workflow inputs.
 
 ### 4. Run the demo
