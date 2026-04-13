@@ -1,0 +1,170 @@
+name: "Demo: Warm Up Resources"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "GitHub Actions environment"
+        required: true
+        default: "demo"
+        type: choice
+        options:
+          - demo
+          - staging
+      scenarios:
+        description: "Which scenarios to warm up"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - webstore
+          - aks
+
+# Required repository secrets (per environment):
+#   AZURE_CLIENT_ID       – App registration / federated credential client ID
+#   AZURE_TENANT_ID       – Entra ID tenant
+#   AZURE_SUBSCRIPTION_ID – Subscription containing demo resources
+#
+# Required repository variables (per environment):
+#   CONTAINER_APP_NAME    – e.g. ca-webstore-demo
+#   RESOURCE_GROUP        – e.g. rg-webstore-demo
+#   AKS_CLUSTER_NAME      – e.g. aks-webstore-demo       (AKS scenario only)
+#   AKS_RESOURCE_GROUP    – e.g. rg-webstore-aks          (AKS scenario only)
+#   PSQL_SERVER_NAME      – e.g. psql-webstore-staging    (webstore scenario only)
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  warmup:
+    name: Start & verify resources
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # ── Webstore (Container Apps) ──────────────────────────
+      - name: Start PostgreSQL
+        if: inputs.scenarios == 'all' || inputs.scenarios == 'webstore'
+        run: |
+          set -euo pipefail
+          STATE=$(az postgres flexible-server show \
+            --name "${{ vars.PSQL_SERVER_NAME }}" \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --query state -o tsv)
+
+          if [ "$STATE" = "Stopped" ]; then
+            echo "⏳ Starting PostgreSQL..."
+            az postgres flexible-server start \
+              --name "${{ vars.PSQL_SERVER_NAME }}" \
+              --resource-group "${{ vars.RESOURCE_GROUP }}"
+            echo "✅ PostgreSQL started"
+          else
+            echo "✅ PostgreSQL already running (state: $STATE)"
+          fi
+
+      - name: Verify webstore health
+        if: inputs.scenarios == 'all' || inputs.scenarios == 'webstore'
+        run: |
+          set -euo pipefail
+          APP_URL=$(az containerapp show \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+
+          echo "🔍 Checking webstore at https://${APP_URL}..."
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              --connect-timeout 5 --max-time 15 \
+              "https://${APP_URL}/api/health")
+            echo "  Attempt $i: HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Webstore is healthy"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "❌ Webstore health check timed out"
+          exit 1
+
+      # ── AKS Blue/Green ────────────────────────────────────
+      - name: Start AKS cluster
+        if: inputs.scenarios == 'all' || inputs.scenarios == 'aks'
+        run: |
+          set -euo pipefail
+          STATE=$(az aks show \
+            --name "${{ vars.AKS_CLUSTER_NAME }}" \
+            --resource-group "${{ vars.AKS_RESOURCE_GROUP }}" \
+            --query powerState.code -o tsv)
+
+          if [ "$STATE" = "Stopped" ]; then
+            echo "⏳ Starting AKS cluster..."
+            az aks start \
+              --name "${{ vars.AKS_CLUSTER_NAME }}" \
+              --resource-group "${{ vars.AKS_RESOURCE_GROUP }}"
+            echo "✅ AKS cluster started"
+          else
+            echo "✅ AKS cluster already running (state: $STATE)"
+          fi
+
+      - name: Verify AKS health
+        if: inputs.scenarios == 'all' || inputs.scenarios == 'aks'
+        run: |
+          set -euo pipefail
+          az aks get-credentials \
+            --name "${{ vars.AKS_CLUSTER_NAME }}" \
+            --resource-group "${{ vars.AKS_RESOURCE_GROUP }}" \
+            --overwrite-existing
+
+          echo "🔍 Checking AKS pods..."
+          kubectl get pods -l app=webstore --no-headers | while read line; do
+            echo "  $line"
+          done
+
+          READY=$(kubectl get pods -l app=webstore -o jsonpath='{range .items[*]}{.status.phase}{"\n"}{end}' | grep -c Running || true)
+          TOTAL=$(kubectl get pods -l app=webstore --no-headers | wc -l)
+          echo "  $READY/$TOTAL pods running"
+
+          if [ "$READY" -lt 2 ]; then
+            echo "❌ Not enough pods running"
+            exit 1
+          fi
+
+          # Verify service selector points to blue
+          SELECTOR=$(kubectl get svc webstore-svc -o jsonpath='{.spec.selector.version}')
+          echo "  Service selector: version=$SELECTOR"
+          if [ "$SELECTOR" != "blue" ]; then
+            echo "⚠️  Service selector is '$SELECTOR', not 'blue' — you may need to reset first"
+          fi
+
+          # Test external endpoint
+          EXTERNAL_IP=$(kubectl get svc webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [ -n "$EXTERNAL_IP" ]; then
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "http://${EXTERNAL_IP}/health")
+            echo "  Health endpoint: HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ AKS webstore is healthy at http://${EXTERNAL_IP}"
+            else
+              echo "❌ AKS health check returned $STATUS"
+              exit 1
+            fi
+          else
+            echo "⚠️  No external IP yet — LoadBalancer may still be provisioning"
+          fi
+
+      # ── Summary ────────────────────────────────────────────
+      - name: Summary
+        run: |
+          echo ""
+          echo "╔══════════════════════════════════════╗"
+          echo "║     🟢 Demo resources are ready!     ║"
+          echo "╚══════════════════════════════════════╝"
+          echo ""
+          echo "Scenarios warmed up: ${{ inputs.scenarios }}"
