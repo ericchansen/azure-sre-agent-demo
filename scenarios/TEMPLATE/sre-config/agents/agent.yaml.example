@@ -1,0 +1,55 @@
+# SRE Agent Configuration — Custom Agent Definition
+#
+# This file defines a custom agent for the SRE Agent to use when investigating
+# incidents in this scenario. The agent is uploaded via the v2 dataplane API:
+#   PUT {endpoint}/api/v2/extendedAgent/agents/{metadata.name}
+#
+# See scripts/Configure-SreAgent.ps1 for automated deployment.
+# See docs: https://sre.azure.com/docs
+
+api_version: azuresre.ai/v1
+kind: AgentConfiguration
+metadata:
+  name: <scenario-slug>-agent
+  description: "Custom investigation agent for <scenario-slug> scenario"
+spec:
+  system_prompt: |
+    You are an SRE agent specialized in investigating failures in the
+    <scenario-slug> environment.
+
+    ## Environment
+    - Resource group: rg-<scenario-slug>
+    - TODO: list key Azure resources
+
+    ## Investigation approach
+    1. Check active alerts and recent metric changes
+    2. Query Application Insights for error patterns
+    3. Inspect resource configuration and recent changes
+    4. Correlate with deployment history
+
+    ## Known failure modes
+    - TODO: describe the primary failure mode for this scenario
+    - TODO: describe remediation steps
+
+    ## Remediation guidelines
+    - Always verify the current state before applying changes
+    - Document evidence before and after remediation
+    - Confirm recovery by re-checking the affected endpoint or metric
+
+  tools:
+    # List the tools this agent should use. Examples:
+    # - kubectl          # For AKS scenarios
+    # - az_containerapp  # For Container Apps scenarios
+    # - az_functionapp   # For Functions scenarios
+    # - app_insights_kql # For all scenarios with Application Insights
+    - app_insights_kql
+
+  knowledge_base:
+    # Reference knowledge-base documents by filename (without path).
+    # These are uploaded separately via the memory/documents API.
+    - investigation.md
+
+  handoff_description: >
+    Hand off to this agent when investigating incidents in the
+    <scenario-slug> environment, particularly when alerts fire
+    from rg-<scenario-slug> resources.

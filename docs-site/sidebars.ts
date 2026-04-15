@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'scenarios/webstore-container-apps/architecture',
             'scenarios/webstore-container-apps/demo-script',
+            'scenarios/webstore-container-apps/prompts',
           ],
         },
         {
@@ -22,6 +23,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'scenarios/aks-blue-green/architecture',
             'scenarios/aks-blue-green/demo-script',
+            'scenarios/aks-blue-green/prompts',
           ],
         },
       ],

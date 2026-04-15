@@ -1,0 +1,58 @@
+---
+title: "<Failure Mode> Investigation"
+scenario: <scenario-slug>
+failure_mode: <failure-mode-slug>
+severity: high
+tags: [<tag1>, <tag2>, <tag3>]
+---
+
+# <Failure Mode> Investigation
+
+<!-- 
+  This knowledge base document is uploaded to the SRE Agent's memory via:
+    POST {endpoint}/api/v2/extendedAgent/memory/documents
+
+  It should contain everything the agent needs to investigate and remediate
+  this failure mode. Focus on:
+  - Concrete symptoms (error codes, metric patterns, log snippets)
+  - Investigation commands with expected output
+  - Root cause patterns and classification
+  - Remediation commands with verification steps
+
+  See scripts/Configure-SreAgent.ps1 for automated deployment.
+-->
+
+## Symptoms
+
+- TODO: describe what the failure looks like
+- TODO: key metrics, error codes, log patterns
+
+## Investigation
+
+### Step 1: Confirm the failure
+
+TODO: add verification command with expected output
+
+### Step 2: Identify root cause
+
+TODO: add investigation commands
+
+### Key indicators
+
+| Indicator | Healthy | Broken |
+|-----------|---------|--------|
+| TODO: metric/check | TODO: expected value | TODO: broken value |
+
+## Remediation
+
+TODO: add fix command with verification steps
+
+### Verification
+
+TODO: confirm the fix worked (re-check metrics, endpoints, etc.)
+
+## Known failure modes
+
+| Trigger | Effect | Status Code | Fix |
+|---------|--------|-------------|-----|
+| TODO | TODO | TODO | TODO |

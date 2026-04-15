@@ -1,0 +1,36 @@
+# SRE Agent Configuration — Data Connector
+#
+# This file defines a data connector that links the SRE Agent to Azure Monitor
+# resources for this scenario. Uploaded via the v2 dataplane API:
+#   PUT {endpoint}/api/v2/extendedAgent/connectors/{metadata.name}
+#
+# See scripts/Configure-SreAgent.ps1 for automated deployment.
+
+api_version: azuresre.ai/v2
+kind: DataConnector
+metadata:
+  name: <scenario-slug>-azure-monitor
+  description: "Azure Monitor connector for <scenario-slug> scenario"
+spec:
+  type: azure_monitor
+  config:
+    resource_group: rg-<scenario-slug>
+    resources:
+      # List the Azure resources the SRE Agent should monitor.
+      # Use the ARM resource type and name.
+      - type: Microsoft.Insights/components
+        name: appi-<scenario-slug>
+      # TODO: add scenario-specific resources. Examples:
+      # - type: Microsoft.ContainerService/managedClusters
+      #   name: aks-<scenario-slug>
+      # - type: Microsoft.App/containerApps
+      #   name: ca-<scenario-slug>
+      # - type: Microsoft.Web/sites
+      #   name: func-<scenario-slug>
+    metrics:
+      - requests/failed
+      - requests/duration
+      # TODO: add scenario-specific metrics
+    alerts:
+      - "Failed Requests - appi-<scenario-slug>"
+      # TODO: add scenario-specific alert names
