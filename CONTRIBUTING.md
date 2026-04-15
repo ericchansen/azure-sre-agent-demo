@@ -96,11 +96,42 @@ Create `scenarios/<slug>/runbooks/<failure-mode>.md`. Include:
 
 SRE Agent can index runbooks from connected GitHub repos — include specific error patterns, log snippets, and `kubectl` or `az` commands it can reuse.
 
-### 6. Add docs site pages
+### 6. Create SRE Agent configuration
+
+Create `scenarios/<slug>/sre-config/` with agent definitions, connectors, and knowledge base documents. Use the `.example` files in `scenarios/TEMPLATE/sre-config/` as a starting point.
+
+```
+sre-config/
+├── agents/
+│   └── <agent-name>.yaml          # Custom agent definition (azuresre.ai/v1)
+├── connectors/
+│   └── azure-monitor.yaml         # Data connector (azuresre.ai/v2)
+└── knowledge-base/
+    └── <failure-mode>.md           # Runbook for agent memory upload
+```
+
+**Agent definition** (`agents/*.yaml`): Defines a custom agent with a system prompt, tool bindings, and knowledge base references. The system prompt should describe the environment, investigation approach, known failure modes, and remediation guidelines.
+
+**Connector** (`connectors/*.yaml`): Links the SRE Agent to Azure Monitor resources (App Insights, compute, databases) in the scenario's resource group.
+
+**Knowledge base** (`knowledge-base/*.md`): Investigation runbooks adapted for agent memory upload. Include YAML front matter with `title`, `scenario`, `failure_mode`, `severity`, and `tags`. Focus on concrete symptoms, investigation commands, root cause patterns, and remediation steps.
+
+Deploy the configuration using the shared script:
+
+```powershell
+./scripts/Configure-SreAgent.ps1 `
+  -ScenarioPath ./scenarios/<slug> `
+  -AgentEndpoint https://<your-agent>.sre.azure.com
+```
+
+See `scripts/README.md` for prerequisites and troubleshooting.
+
+### 7. Add docs site pages
 
 Create:
 - `docs-site/docs/scenarios/<slug>/architecture.md`
 - `docs-site/docs/scenarios/<slug>/demo-script.md`
+- `docs-site/docs/scenarios/<slug>/prompts.md`
 
 Add to `docs-site/sidebars.ts` under the `Scenarios` category:
 
@@ -111,21 +142,23 @@ Add to `docs-site/sidebars.ts` under the `Scenarios` category:
   items: [
     'scenarios/<slug>/architecture',
     'scenarios/<slug>/demo-script',
+    'scenarios/<slug>/prompts',
   ],
 },
 ```
 
-### 7. Update the README scenario table
+### 8. Update the README scenario table
 
 Add a row to the scenarios table in `README.md`.
 
-### 8. Provision Azure resources
+### 9. Provision Azure resources
 
 1. Create resource group: `az group create -n rg-<slug> -l <region>`
 2. Deploy infra: `az deployment group create ...`
 3. Configure GitHub Actions environment with required secrets/variables
 4. Update SRE Agent `targetResourceGroups` (step 3 above)
-5. End-to-end validation: break → alert fires → agent investigates → agent remediates
+5. Deploy SRE Agent configuration: `./scripts/Configure-SreAgent.ps1 -ScenarioPath ./scenarios/<slug> -AgentEndpoint <url>`
+6. End-to-end validation: break → alert fires → agent investigates → agent remediates
 
 ---
 
@@ -137,7 +170,9 @@ Add a row to the scenarios table in `README.md`.
 - [ ] SRE Agent `targetResourceGroups` updated
 - [ ] `<slug>-demo-break.yml` and `<slug>-demo-reset.yml` workflows
 - [ ] Runbook in `runbooks/`
-- [ ] Docs pages (`architecture.md`, `demo-script.md`)
+- [ ] SRE Agent config (`sre-config/agents/`, `connectors/`, `knowledge-base/`)
+- [ ] SRE Agent config deployed via `Configure-SreAgent.ps1`
+- [ ] Docs pages (`architecture.md`, `demo-script.md`, `prompts.md`)
 - [ ] `sidebars.ts` updated
 - [ ] `README.md` scenario table updated
 - [ ] End-to-end validated

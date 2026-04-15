@@ -1,0 +1,27 @@
+api_version: azuresre.ai/v2
+kind: DataConnector
+metadata:
+  name: webstore-azure-monitor
+  description: >
+    Connects to Azure Monitor for the Cocoa & Co. webstore scenario. Provides
+    telemetry from App Insights (request/exception/dependency traces), Container Apps
+    (revision health, scaling, resource utilization), and PostgreSQL Flexible Server
+    (connection metrics, query performance, server health).
+spec:
+  type: azure_monitor
+  config:
+    resource_group: rg-webstore-demo
+    resources:
+      - type: Microsoft.Insights/components
+        name: appi-webstore-staging
+      - type: Microsoft.App/containerApps
+        name: ca-webstore-staging
+      - type: Microsoft.DBforPostgreSQL/flexibleServers
+        name: psql-webstore-staging
+    metrics:
+      - requests/failed
+      - requests/duration
+      - dependencies/failed
+      - exceptions/count
+    alerts:
+      - "Failed Requests - appi-webstore-staging"

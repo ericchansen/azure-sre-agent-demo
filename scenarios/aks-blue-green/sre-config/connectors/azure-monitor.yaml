@@ -1,0 +1,22 @@
+api_version: azuresre.ai/v2
+kind: DataConnector
+metadata:
+  name: aks-azure-monitor
+  description: >
+    Connects the SRE Agent to Azure Monitor and App Insights for the
+    aks-webstore-demo cluster. Surfaces failed-request metrics, latency
+    data, and the error-rate alert that triggers investigation.
+spec:
+  type: azure_monitor
+  config:
+    resource_group: rg-webstore-aks
+    resources:
+      - type: Microsoft.Insights/components
+        name: appi-aks-webstore-demo
+      - type: Microsoft.ContainerService/managedClusters
+        name: aks-webstore-demo
+    metrics:
+      - requests/failed
+      - requests/duration
+    alerts:
+      - "Failed Requests - appi-aks-webstore-demo"
