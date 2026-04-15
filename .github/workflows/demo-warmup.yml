@@ -65,9 +65,30 @@ jobs:
             az postgres flexible-server start \
               --name "${{ vars.PSQL_SERVER_NAME }}" \
               --resource-group "${{ vars.RESOURCE_GROUP }}"
-            echo "✅ PostgreSQL started"
           else
-            echo "✅ PostgreSQL already running (state: $STATE)"
+            echo "ℹ️ PostgreSQL current state: $STATE"
+          fi
+
+          if [ "$STATE" != "Ready" ]; then
+            echo "⏳ Waiting for PostgreSQL to reach Ready state..."
+            for i in $(seq 1 30); do
+              STATE=$(az postgres flexible-server show \
+                --name "${{ vars.PSQL_SERVER_NAME }}" \
+                --resource-group "${{ vars.RESOURCE_GROUP }}" \
+                --query state -o tsv)
+              echo "  Attempt $i: state=$STATE"
+              if [ "$STATE" = "Ready" ]; then
+                echo "✅ PostgreSQL is Ready"
+                break
+              fi
+              if [ "$i" -eq 30 ]; then
+                echo "❌ PostgreSQL did not reach Ready state in time"
+                exit 1
+              fi
+              sleep 10
+            done
+          else
+            echo "✅ PostgreSQL already Ready"
           fi
 
       - name: Verify webstore health
@@ -109,10 +130,26 @@ jobs:
             az aks start \
               --name "${{ vars.AKS_CLUSTER_NAME }}" \
               --resource-group "${{ vars.AKS_RESOURCE_GROUP }}"
-            echo "✅ AKS cluster started"
-          else
-            echo "✅ AKS cluster already running (state: $STATE)"
           fi
+
+          # Poll until control plane is Running
+          echo "⏳ Waiting for AKS cluster to reach Running state..."
+          for i in $(seq 1 30); do
+            STATE=$(az aks show \
+              --name "${{ vars.AKS_CLUSTER_NAME }}" \
+              --resource-group "${{ vars.AKS_RESOURCE_GROUP }}" \
+              --query powerState.code -o tsv)
+            echo "  Attempt $i: state=$STATE"
+            if [ "$STATE" = "Running" ]; then
+              echo "✅ AKS cluster is Running"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "❌ AKS cluster did not reach Running state in time"
+              exit 1
+            fi
+            sleep 10
+          done
 
       - name: Verify AKS health
         if: inputs.scenarios == 'all' || inputs.scenarios == 'aks'
@@ -123,17 +160,15 @@ jobs:
             --resource-group "${{ vars.AKS_RESOURCE_GROUP }}" \
             --overwrite-existing
 
-          echo "🔍 Checking AKS pods..."
-          kubectl get pods -l app=webstore --no-headers | while read line; do
-            echo "  $line"
-          done
+          echo "⏳ Waiting for webstore pods to become Ready..."
+          kubectl wait --for=condition=ready pod -l app=webstore --timeout=120s
 
-          READY=$(kubectl get pods -l app=webstore -o jsonpath='{range .items[*]}{.status.phase}{"\n"}{end}' | grep -c Running || true)
+          READY=$(kubectl get pods -l app=webstore -o jsonpath='{range .items[*]}{range .status.conditions[?(@.type=="Ready")]}{.status}{"\n"}{end}{end}' | grep -c '^True$' || true)
           TOTAL=$(kubectl get pods -l app=webstore --no-headers | wc -l)
-          echo "  $READY/$TOTAL pods running"
+          echo "  $READY/$TOTAL pods ready"
 
           if [ "$READY" -lt 2 ]; then
-            echo "❌ Not enough pods running"
+            echo "❌ Not enough pods ready"
             exit 1
           fi
 
@@ -144,19 +179,37 @@ jobs:
             echo "⚠️  Service selector is '$SELECTOR', not 'blue' — you may need to reset first"
           fi
 
-          # Test external endpoint
-          EXTERNAL_IP=$(kubectl get svc webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          if [ -n "$EXTERNAL_IP" ]; then
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "http://${EXTERNAL_IP}/health")
-            echo "  Health endpoint: HTTP $STATUS"
-            if [ "$STATUS" = "200" ]; then
-              echo "✅ AKS webstore is healthy at http://${EXTERNAL_IP}"
-            else
-              echo "❌ AKS health check returned $STATUS"
-              exit 1
+          # Wait for external endpoint, then verify health
+          EXTERNAL_IP=""
+          TIMEOUT_SECONDS=300
+          SLEEP_SECONDS=10
+          ELAPSED_SECONDS=0
+
+          echo "🌐 Waiting for LoadBalancer external IP..."
+          while [ "$ELAPSED_SECONDS" -lt "$TIMEOUT_SECONDS" ]; do
+            EXTERNAL_IP=$(kubectl get svc webstore-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            if [ -n "$EXTERNAL_IP" ]; then
+              echo "  External IP assigned: $EXTERNAL_IP"
+              break
             fi
+
+            echo "  No external IP yet after ${ELAPSED_SECONDS}s; retrying in ${SLEEP_SECONDS}s..."
+            sleep "$SLEEP_SECONDS"
+            ELAPSED_SECONDS=$((ELAPSED_SECONDS + SLEEP_SECONDS))
+          done
+
+          if [ -z "$EXTERNAL_IP" ]; then
+            echo "❌ Timed out waiting for LoadBalancer external IP after ${TIMEOUT_SECONDS}s"
+            exit 1
+          fi
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "http://${EXTERNAL_IP}/health")
+          echo "  Health endpoint: HTTP $STATUS"
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ AKS webstore is healthy at http://${EXTERNAL_IP}"
           else
-            echo "⚠️  No external IP yet — LoadBalancer may still be provisioning"
+            echo "❌ AKS health check returned $STATUS"
+            exit 1
           fi
 
       # ── Summary ────────────────────────────────────────────
