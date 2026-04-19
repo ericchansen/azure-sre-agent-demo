@@ -8,6 +8,6 @@
     "location": { "value": "swedencentral" },
     "accessLevel": { "value": "High" },
     "targetResourceGroups": { "value": ["rg-webstore-demo", "rg-webstore-aks"] },
-    "targetSubscriptions": { "value": ["<YOUR_SUBSCRIPTION_ID>"] }
+    "targetSubscriptions": { "value": ["9450bd3b-96c5-48b2-bfdf-3374304efbd7", "f7858112-5c13-46e5-8341-3851a12164fa"] }
   }
 }
