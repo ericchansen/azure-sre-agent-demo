@@ -1,8 +1,8 @@
 # Runbook: Frontend Failure Investigation
 
 > **Scope:** Cocoa Co Webstore (Next.js on Azure Container Apps)  
-> **Environment:** `rg-webstore-demo` (single demo environment — staging and prod have been consolidated)  
-> **Telemetry:** Application Insights (`appi-webstore-staging` in `rg-webstore-demo`)  
+> **Environment:** `rg-webstore-prod` (single demo environment — staging and prod have been consolidated)  
+> **Telemetry:** Application Insights (`appi-webstore-prod` in `rg-webstore-prod`)  
 > **Last validated:** 2026-03-31
 
 ## When to Use This Runbook
@@ -17,8 +17,8 @@
 
 | Requirement | Details |
 |-------------|---------|
-| Azure RBAC | Reader on `rg-webstore-demo` |
-| Application Insights | `appi-webstore-staging` (in `rg-webstore-demo`) — all telemetry-dependent steps require this resource |
+| Azure RBAC | Reader on `rg-webstore-prod` |
+| Application Insights | `appi-webstore-prod` (in `rg-webstore-prod`) — all telemetry-dependent steps require this resource |
 | Source code access | `ericchansen/webstore` GitHub repository |
 | Tools | Azure CLI, Application Insights query tools, GitHub access |
 
@@ -32,17 +32,17 @@
 
 1. List resources in the affected resource group:
    ```
-   az resource list --resource-group rg-webstore-demo --subscription <sub-id> --query "[].{name:name, type:type}" -o table
+   az resource list --resource-group rg-webstore-prod --subscription <sub-id> --query "[].{name:name, type:type}" -o table
    ```
 2. Identify the key resources:
-   - **Container App:** `ca-webstore-staging` (in `rg-webstore-demo`)
-   - **Application Insights:** `appi-webstore-staging`
-   - **PostgreSQL:** `psql-webstore-staging`
+   - **Container App:** `ca-webstore-prod` (in `rg-webstore-prod`)
+   - **Application Insights:** `appi-webstore-prod`
+   - **PostgreSQL:** `psql-webstore-prod`
    - **Container Registry:** `acrwebstorestaging`
 
 3. Confirm the Container App is running:
    ```
-   az containerapp show --name ca-webstore-staging --resource-group rg-webstore-demo --subscription <sub-id> \
+   az containerapp show --name ca-webstore-prod --resource-group rg-webstore-prod --subscription <sub-id> \
      --query "{name:name, fqdn:properties.configuration.ingress.fqdn, latestRevision:properties.latestRevisionName, runningStatus:properties.runningStatus, provisioningState:properties.provisioningState}" -o json
    ```
 
@@ -53,12 +53,12 @@
   1. Capture the current app state (already done above — note `latestRevision` and `provisioningState`).
   2. List revisions to identify whether a recent deployment introduced the issue:
      ```
-     az containerapp revision list --name ca-webstore-staging --resource-group rg-webstore-demo --subscription <sub-id> \
+     az containerapp revision list --name ca-webstore-prod --resource-group rg-webstore-prod --subscription <sub-id> \
        --query "[].{name:name, active:properties.active, created:properties.createdTime, traffic:properties.trafficWeight, state:properties.runningState}" -o table
      ```
   3. If a bad deployment is suspected, roll traffic back to the last known-good revision:
      ```
-     az containerapp ingress traffic set --name ca-webstore-staging --resource-group rg-webstore-demo --subscription <sub-id> \
+     az containerapp ingress traffic set --name ca-webstore-prod --resource-group rg-webstore-prod --subscription <sub-id> \
        --revision-weight <last-known-good-revision>=100
      ```
   4. Once the app is running again, resume this runbook from Step 2.
@@ -73,7 +73,7 @@
 
 1. List metric alert **rules** in the resource group (shows definitions and thresholds, not fired instances):
    ```
-   az monitor metrics alert list --resource-group rg-webstore-demo --subscription <sub-id> -o json
+   az monitor metrics alert list --resource-group rg-webstore-prod --subscription <sub-id> -o json
    ```
 2. Note any alerts with `enabled: true` and review their:
    - Threshold and evaluation frequency
@@ -88,7 +88,7 @@
 
 ### Key Alert: Failed Requests
 
-- **Name:** `Failed Requests - appi-webstore-staging`
+- **Name:** `Failed Requests - appi-webstore-prod`
 - **Condition:** >1 failed request in a 1-minute window
 - **Severity:** 3 (Warning)
 - **Purpose:** Near-instant detection for demo/low-traffic environments
@@ -106,7 +106,7 @@ This is the most important diagnostic step. Use Application Insights `CorrelateT
 > - **Human / CLI:** use `az monitor app-insights query` with an equivalent KQL query, for example:
 >   ```bash
 >   az monitor app-insights query \
->     --app appi-webstore-staging --resource-group rg-webstore-demo --subscription <sub-id> \
+>     --app appi-webstore-prod --resource-group rg-webstore-prod --subscription <sub-id> \
 >     --analytics-query "requests | where success == false | summarize count() by resultCode, bin(timestamp, 5m) | order by timestamp desc"
 >   ```
 > - **Azure Portal:** Portal → **Application Insights** → **Logs** → paste KQL directly.
@@ -413,7 +413,7 @@ az containerapp revision list --name <app> --resource-group <rg> --subscription 
 
 ### Get App Insights resource ID
 ```bash
-az resource show --name appi-webstore-staging --resource-group rg-webstore-demo \
+az resource show --name appi-webstore-prod --resource-group rg-webstore-prod \
   --resource-type Microsoft.Insights/components --subscription <sub-id> \
   --query id -o tsv
 ```

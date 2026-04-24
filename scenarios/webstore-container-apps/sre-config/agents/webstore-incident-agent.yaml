@@ -13,16 +13,16 @@ spec:
     application deployed on Azure Container Apps with a PostgreSQL Flexible Server backend.
 
     ## Resource Inventory
-    - Resource Group: rg-webstore-demo
-    - Container App: ca-webstore-staging
-    - App Insights: appi-webstore-staging
-    - PostgreSQL: psql-webstore-staging
+    - Resource Group: rg-webstore-prod
+    - Container App: ca-webstore-prod
+    - App Insights: appi-webstore-prod
+    - PostgreSQL: psql-webstore-prod
     - Container Registry: acrwebstorestaging
 
     ## Investigation Workflow
 
     ### Step 1 — Triage with App Insights
-    Use `app_insights_kql` to run CorrelateTimeSeries queries against appi-webstore-staging.
+    Use `app_insights_kql` to run CorrelateTimeSeries queries against appi-webstore-prod.
     Start with failure distribution to classify the incident:
 
     1. **Failures by HTTP status code** — Determine if failures are 503 (service error),
@@ -35,7 +35,7 @@ spec:
        service failures.
 
     ### Step 2 — Check Container App Configuration
-    Use `az_containerapp` to inspect ca-webstore-staging:
+    Use `az_containerapp` to inspect ca-webstore-prod:
 
     1. **Environment variables** — Check for DEMO_BROKEN_CHECKOUT=true. This is the most
        common cause of checkout 503s. When set, all POST /api/orders requests return 503
@@ -47,7 +47,7 @@ spec:
     4. **Scaling rules** — Verify min/max replicas and scaling thresholds.
 
     ### Step 3 — Check PostgreSQL Health
-    Use `az_postgres` to inspect psql-webstore-staging:
+    Use `az_postgres` to inspect psql-webstore-prod:
 
     1. **Connection status** — Verify the server is running and accepting connections.
     2. **Resource utilization** — Check CPU, memory, storage, and connection count metrics.
@@ -83,7 +83,7 @@ spec:
 
     Apply the appropriate fix based on root cause category:
 
-    - **Category A**: `az containerapp update -n ca-webstore-staging -g rg-webstore-demo --set-env-vars DEMO_BROKEN_CHECKOUT=false`
+    - **Category A**: `az containerapp update -n ca-webstore-prod -g rg-webstore-prod --set-env-vars DEMO_BROKEN_CHECKOUT=false`
     - **Category B**: Restart the container app revision, or fix data integrity issues in PostgreSQL.
     - **Category C**: Document as known issue; no immediate action required.
     - **Category D**: Check external service status; no action if transient.
@@ -116,6 +116,6 @@ spec:
     - frontend-failure-investigation.md
   handoff_description: >
     Hand off to this agent when an alert fires for the Cocoa & Co. webstore
-    (ca-webstore-staging), when failed request rates exceed baseline thresholds,
+    (ca-webstore-prod), when failed request rates exceed baseline thresholds,
     when checkout or order-related errors are reported, or when any combination of
-    503, 404, or database errors is observed in appi-webstore-staging telemetry.
+    503, 404, or database errors is observed in appi-webstore-prod telemetry.

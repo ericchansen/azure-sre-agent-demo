@@ -12,7 +12,7 @@
 
 targetScope = 'resourceGroup'
 
-@description('Name of the Application Insights resource to monitor, for example appi-webstore-demo')
+@description('Name of the Application Insights resource to monitor, for example appi-webstore-prod')
 param appInsightsName string
 
 @description('Failure threshold — alert fires when failed requests exceed this count in the window')

@@ -22,8 +22,8 @@ on:
 #   AZURE_SUBSCRIPTION_ID – Subscription containing the Container App
 #
 # Required repository variables:
-#   CONTAINER_APP_NAME    – e.g. ca-webstore-demo
-#   RESOURCE_GROUP        – e.g. rg-webstore-demo
+#   CONTAINER_APP_NAME    – e.g. ca-webstore-prod
+#   RESOURCE_GROUP        – e.g. rg-webstore-prod
 #   TEST_PRODUCT_ID       – real seeded product CUID (optional if passed as workflow input)
 
 permissions:
