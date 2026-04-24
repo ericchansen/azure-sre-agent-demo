@@ -17,8 +17,8 @@ on:
 #   AZURE_SUBSCRIPTION_ID – Subscription containing the demo resources
 #
 # Required repository variables (set at repo level, NOT environment-scoped):
-#   RESOURCE_GROUP           – e.g. rg-webstore-demo
-#   APP_INSIGHTS_NAME        – e.g. appi-webstore-demo
+#   RESOURCE_GROUP           – e.g. rg-webstore-prod
+#   APP_INSIGHTS_NAME        – e.g. appi-webstore-prod
 #   DEMO_WORKFLOW_ENVIRONMENT – GitHub Actions environment to run under (e.g. 'demo').
 #                              MUST be a repository-level variable, not an environment-scoped
 #                              variable, because it is evaluated before the environment is
@@ -48,7 +48,7 @@ jobs:
         run: |
           APP_INSIGHTS_NAME="${{ vars.APP_INSIGHTS_NAME }}"
           if [ -z "$APP_INSIGHTS_NAME" ]; then
-            APP_INSIGHTS_NAME="appi-webstore-staging"
+            APP_INSIGHTS_NAME="appi-webstore-prod"
             echo "⚠️ APP_INSIGHTS_NAME is not set; falling back to $APP_INSIGHTS_NAME"
           fi
           echo "APP_INSIGHTS_NAME=$APP_INSIGHTS_NAME" >> "$GITHUB_ENV"

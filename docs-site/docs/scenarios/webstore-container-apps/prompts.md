@@ -29,9 +29,9 @@ Start here to let the agent showcase its full reasoning chain. These prompts giv
 
 > **"Customers are reporting checkout failures on the webstore. Can you investigate?"**
 
-> **"The Failed Requests alert fired on appi-webstore-staging. What's going on?"**
+> **"The Failed Requests alert fired on appi-webstore-prod. What's going on?"**
 
-> **"Something is wrong with the Cocoa & Co. webstore in rg-webstore-demo. Please investigate."**
+> **"Something is wrong with the Cocoa & Co. webstore in rg-webstore-prod. Please investigate."**
 
 :::tip What the agent typically does
 With an open-ended prompt, the agent will:
@@ -50,7 +50,7 @@ This chain is the most impressive thing to show an audience — let it run.
 
 If the open-ended approach is taking too long or the audience needs to see a specific capability, steer the agent toward a subsystem.
 
-> **"Check the Container App environment variables for ca-webstore-staging — are there any demo flags enabled?"**
+> **"Check the Container App environment variables for ca-webstore-prod — are there any demo flags enabled?"**
 
 > **"Look at the App Insights failure distribution by HTTP status code for the last hour."**
 
@@ -73,14 +73,14 @@ Use these when:
 
 These prompts ask for exact data points. Use them to get a crisp, on-screen answer or to demonstrate the agent's ability to run precise queries.
 
-> **"Run this KQL against appi-webstore-staging:"**
+> **"Run this KQL against appi-webstore-prod:"**
 > ```kusto
 > requests
 > | where success == false
 > | summarize count() by resultCode, bin(timestamp, 5m)
 > ```
 
-> **"Check the value of DEMO_BROKEN_CHECKOUT on ca-webstore-staging."**
+> **"Check the value of DEMO_BROKEN_CHECKOUT on ca-webstore-prod."**
 
 > **"Show me the exception types from App Insights — specifically any Prisma P2003 or P1008 errors."**
 
@@ -114,7 +114,7 @@ In **Autonomous mode**, the agent executes immediately. Great for showing speed,
 
 Safety-net prompts. If the agent's investigation stalls or you're running short on time, give it the exact command.
 
-> **"Run: `az containerapp update --name ca-webstore-staging --resource-group rg-webstore-demo --set-env-vars DEMO_BROKEN_CHECKOUT=false`"**
+> **"Run: `az containerapp update --name ca-webstore-prod --resource-group rg-webstore-prod --set-env-vars DEMO_BROKEN_CHECKOUT=false`"**
 
 > **"Verify the fix: query App Insights for the last 5 minutes of requests on POST /api/orders and confirm success rate is back to normal."**
 
@@ -128,13 +128,13 @@ These are your **emergency brake**. In a live demo, if the agent is stuck in a l
 
 Run these **before the demo** to confirm everything is ready. They also work as warm-up prompts to show the agent's awareness of the environment.
 
-> **"What Azure resources are in rg-webstore-demo?"**
+> **"What Azure resources are in rg-webstore-prod?"**
 
 > **"Is the webstore Container App running? Check its provisioning state and latest revision."**
 
 > **"Can you verify the PostgreSQL database is accessible and the webstore health endpoint returns ok?"**
 
-> **"Are there any active Azure Monitor alerts in rg-webstore-demo?"**
+> **"Are there any active Azure Monitor alerts in rg-webstore-prod?"**
 
 :::info Pre-demo double-check
 The agent's answers here confirm that:

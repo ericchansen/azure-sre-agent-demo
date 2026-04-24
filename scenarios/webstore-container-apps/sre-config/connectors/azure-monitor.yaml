@@ -10,18 +10,18 @@ metadata:
 spec:
   type: azure_monitor
   config:
-    resource_group: rg-webstore-demo
+    resource_group: rg-webstore-prod
     resources:
       - type: Microsoft.Insights/components
-        name: appi-webstore-staging
+        name: appi-webstore-prod
       - type: Microsoft.App/containerApps
-        name: ca-webstore-staging
+        name: ca-webstore-prod
       - type: Microsoft.DBforPostgreSQL/flexibleServers
-        name: psql-webstore-staging
+        name: psql-webstore-prod
     metrics:
       - requests/failed
       - requests/duration
       - dependencies/failed
       - exceptions/count
     alerts:
-      - "Failed Requests - appi-webstore-staging"
+      - "Failed Requests - appi-webstore-prod"

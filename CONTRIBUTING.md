@@ -67,7 +67,7 @@ Add your resource group to `infra/sre-agent/bicep/sre-agent.parameters.json`:
 
 ```json
 "targetResourceGroups": {
-  "value": ["rg-webstore-demo", "rg-<your-scenario-slug>"]
+  "value": ["rg-webstore-prod", "rg-<your-scenario-slug>"]
 }
 ```
 

@@ -23,9 +23,9 @@ A live e-commerce storefront — **[Cacao & Co.](https://github.com/ericchansen/
 
 | Resource | Type | Resource Group |
 |----------|------|---------------|
-| `ca-webstore-demo` | Container App | `rg-webstore-demo` |
-| `appi-webstore-demo` | Application Insights | `rg-webstore-demo` |
-| `Failed Requests - appi-webstore-demo` | Metric Alert | `rg-webstore-demo` |
+| `ca-webstore-prod` | Container App | `rg-webstore-prod` |
+| `appi-webstore-prod` | Application Insights | `rg-webstore-prod` |
+| `Failed Requests - appi-webstore-prod` | Metric Alert | `rg-webstore-prod` |
 
 The SRE Agent is shared — see [`infra/sre-agent/`](../../infra/sre-agent/README.md).
 
@@ -43,9 +43,9 @@ The SRE Agent is shared — see [`infra/sre-agent/`](../../infra/sre-agent/READM
 **Variables** (per environment):
 | Variable | Example |
 |----------|---------|
-| `CONTAINER_APP_NAME` | `ca-webstore-demo` |
-| `RESOURCE_GROUP` | `rg-webstore-demo` |
-| `APP_INSIGHTS_NAME` | `appi-webstore-demo` |
+| `CONTAINER_APP_NAME` | `ca-webstore-prod` |
+| `RESOURCE_GROUP` | `rg-webstore-prod` |
+| `APP_INSIGHTS_NAME` | `appi-webstore-prod` |
 | `TEST_PRODUCT_ID` | Real seeded product CUID, e.g. `cmmy0uf9f0006aoud83hpuo94` |
 
 **Repository-level variables** (must be repo-level, not environment-scoped):
@@ -78,9 +78,9 @@ Triggers when `requests/failed` count > 1 in a 1-minute window. Deploy via the `
 
 ```bash
 az deployment group create \
-  --resource-group rg-webstore-demo \
+  --resource-group rg-webstore-prod \
   --template-file scenarios/webstore-container-apps/infra/monitoring/failed-requests-alert.bicep \
-  --parameters appInsightsName=appi-webstore-demo
+  --parameters appInsightsName=appi-webstore-prod
 ```
 
 ---

@@ -12,7 +12,7 @@ Bicep templates for alert rules that monitor the webstore application.
 
 The SRE Agent's own infra (`infra/sre-agent/`) creates resources in `rg-webstore-sre-agent`, including the agent's own Application Insights (`app-insights-*`) for agent diagnostics.
 
-The webstore's telemetry (requests, traces, exceptions) flows to the Application Insights resource attached to your demo environment (for example, `appi-webstore-demo` in `rg-webstore-demo`) — a completely different App Insights resource from the agent's own diagnostics. Alert rules that monitor the webstore must target that resource, so they live here.
+The webstore's telemetry (requests, traces, exceptions) flows to the Application Insights resource attached to your demo environment (for example, `appi-webstore-prod` in `rg-webstore-prod`) — a completely different App Insights resource from the agent's own diagnostics. Alert rules that monitor the webstore must target that resource, so they live here.
 
 ## Deployment
 

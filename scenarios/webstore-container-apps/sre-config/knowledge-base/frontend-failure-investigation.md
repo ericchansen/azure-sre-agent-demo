@@ -14,17 +14,17 @@ Ensure access to the following Azure resources before starting investigation:
 
 | Resource | Type | Name |
 |----------|------|------|
-| Resource Group | Microsoft.Resources/resourceGroups | `rg-webstore-demo` |
-| Container App | Microsoft.App/containerApps | `ca-webstore-staging` |
-| App Insights | Microsoft.Insights/components | `appi-webstore-staging` |
-| PostgreSQL | Microsoft.DBforPostgreSQL/flexibleServers | `psql-webstore-staging` |
+| Resource Group | Microsoft.Resources/resourceGroups | `rg-webstore-prod` |
+| Container App | Microsoft.App/containerApps | `ca-webstore-prod` |
+| App Insights | Microsoft.Insights/components | `appi-webstore-prod` |
+| PostgreSQL | Microsoft.DBforPostgreSQL/flexibleServers | `psql-webstore-prod` |
 | Container Registry | Microsoft.ContainerRegistry/registries | `acrwebstorestaging` |
 
 ## Architecture
 
 ```
 ┌─────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
-│   Browser    │────▶│  ca-webstore-staging  │────▶│ psql-webstore-staging│
+│   Browser    │────▶│  ca-webstore-prod  │────▶│ psql-webstore-prod│
 │  (Customer)  │◀────│  (Next.js on ACA)     │◀────│  (PostgreSQL Flex)   │
 └─────────────┘     └──────────────────────┘     └─────────────────────┘
                            │        │
@@ -52,13 +52,13 @@ Ensure access to the following Azure resources before starting investigation:
 
 | Alert | Condition | Severity |
 |-------|-----------|----------|
-| Failed Requests - appi-webstore-staging | Failed request count exceeds baseline threshold | High |
+| Failed Requests - appi-webstore-prod | Failed request count exceeds baseline threshold | High |
 
 When this alert fires, begin investigation at Step 1.
 
 ## Step 1 — Correlate Telemetry with CorrelateTimeSeries
 
-Run these KQL queries against `appi-webstore-staging` to classify the failure pattern.
+Run these KQL queries against `appi-webstore-prod` to classify the failure pattern.
 
 ### 1.1 Failures by HTTP Result Code
 
@@ -150,13 +150,13 @@ Record these values before and after remediation to demonstrate recovery.
 
 **Verification:**
 ```bash
-az containerapp show -n ca-webstore-staging -g rg-webstore-demo \
+az containerapp show -n ca-webstore-prod -g rg-webstore-prod \
   --query "properties.template.containers[0].env[?name=='DEMO_BROKEN_CHECKOUT']"
 ```
 
 **Remediation:**
 ```bash
-az containerapp update -n ca-webstore-staging -g rg-webstore-demo \
+az containerapp update -n ca-webstore-prod -g rg-webstore-prod \
   --set-env-vars DEMO_BROKEN_CHECKOUT=false
 ```
 
@@ -176,7 +176,7 @@ az containerapp update -n ca-webstore-staging -g rg-webstore-demo \
 
 **Verification — check PostgreSQL health:**
 ```bash
-az postgres flexible-server show -n psql-webstore-staging -g rg-webstore-demo \
+az postgres flexible-server show -n psql-webstore-prod -g rg-webstore-prod \
   --query "{state:state, version:version, sku:sku.name}"
 ```
 
@@ -220,22 +220,22 @@ dependencies
 
 **Verification:**
 ```bash
-az containerapp show -n ca-webstore-staging -g rg-webstore-demo \
+az containerapp show -n ca-webstore-prod -g rg-webstore-prod \
   --query "properties.template.containers[0].resources"
 
 az monitor metrics list --resource \
-  "/subscriptions/{sub}/resourceGroups/rg-webstore-demo/providers/Microsoft.App/containerApps/ca-webstore-staging" \
+  "/subscriptions/{sub}/resourceGroups/rg-webstore-prod/providers/Microsoft.App/containerApps/ca-webstore-prod" \
   --metric "UsageNanoCores" --interval PT5M --start-time (now - 1h)
 ```
 
 **Remediation:**
 ```bash
 # Scale out
-az containerapp update -n ca-webstore-staging -g rg-webstore-demo \
+az containerapp update -n ca-webstore-prod -g rg-webstore-prod \
   --min-replicas 2 --max-replicas 10
 
 # Or increase per-container resources
-az containerapp update -n ca-webstore-staging -g rg-webstore-demo \
+az containerapp update -n ca-webstore-prod -g rg-webstore-prod \
   --cpu 1.0 --memory 2.0Gi
 ```
 
@@ -258,7 +258,7 @@ After applying remediation, confirm recovery using these steps:
 2. **Test affected endpoint** — For checkout fixes, send a test `POST /api/orders` and confirm HTTP 200.
 3. **Check new revision health** — After env var changes, verify the new Container App revision is Running:
    ```bash
-   az containerapp revision list -n ca-webstore-staging -g rg-webstore-demo \
+   az containerapp revision list -n ca-webstore-prod -g rg-webstore-prod \
      --query "[?properties.runningState=='Running'].{name:name, created:properties.createdTime}" -o table
    ```
 4. **Monitor 5–10 minutes** — Confirm no recurrence of failures in App Insights live metrics.
