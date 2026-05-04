@@ -6,7 +6,7 @@ description: How Azure SRE Agent connects to your data sources and tools.
 
 # Connectors
 
-Azure SRE Agent has **built-in access** to Azure services and can be extended with connectors for external tools.
+Azure SRE Agent is designed to work alongside your existing observability and incident management tools, not replace them. It has **built-in access** to Azure services and can be extended with connectors for external tools. The key differentiator is correlation — the agent connects data from multiple sources into a single investigation, so you don't have to context-switch between dashboards during an incident.
 
 > Full reference: [sre.azure.com/docs/concepts/connectors](https://sre.azure.com/docs/concepts/connectors)
 

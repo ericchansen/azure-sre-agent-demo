@@ -42,8 +42,25 @@ Agent: "I found checkout was failing due to DEMO_BROKEN_CHECKOUT=true.
 | Daily health checks | **Autonomous** |
 | Security alerts | **Review** |
 
-:::tip Start with Review
-Observe what the agent recommends for 2–4 weeks. When you find patterns you're always approving, switch those specific triggers to Autonomous.
+## Staying in control
+
+Three mechanisms keep you in control at every layer:
+
+| Mechanism | What it controls |
+|-----------|-----------------|
+| **RBAC** | What the agent can see and do — scoped through its managed identity and Azure role assignments |
+| **Approval gates** | Review mode requires human approval before any infrastructure change executes |
+| **Audit trail** | Every investigation step, proposed action, and outcome is logged and traceable |
+
+Together: RBAC controls **scope**, approval gates control **action**, and the audit trail provides **visibility**.
+
+## Getting started in production
+
+:::tip Start with a high-noise, non-critical workload
+1. Deploy in **Review mode** against a workload that generates frequent, well-understood alerts
+2. Observe what the agent recommends for 2–4 weeks — build confidence in its reasoning
+3. As confidence grows, expand to additional workloads
+4. Move well-understood patterns to **Autonomous mode** while keeping sensitive workloads in Review
 :::
 
 ## In this demo

@@ -157,7 +157,7 @@ Open GitHub → Issues. The agent created an issue with:
 - Evidence (App Insights query results, kubectl output)
 - Recommended permanent fix
 
-> "The agent left a paper trail. The team wakes up, sees the issue, and immediately knows what happened and what to do."
+> "This isn't just a paper trail — it's a structured root cause analysis. The team wakes up, sees the issue, and immediately knows what happened and what to do. And because this is a GitHub Issue with full context, tools like GitHub Copilot can pick it up and propose a pull request to prevent this failure class from recurring. That's the full loop: detect → investigate → remediate → prevent."
 
 ---
 
@@ -165,6 +165,7 @@ Open GitHub → Issues. The agent created an issue with:
 
 | Question | Answer |
 |----------|--------|
+| "How does this reduce MTTR?" | The investigation step between "alert fires" and "fix applied" is where most mean time to resolution is lost. SRE Agent compresses that from minutes to seconds by correlating signals across systems automatically. |
 | "Does it always work?" | Run mode controls this. Review = human in the loop. Autonomous = fully self-healing. |
 | "What if the fix is wrong?" | Review mode lets you reject. The agent learns from feedback (persistent memory). |
 | "Does it work with other Azure services?" | Yes — Container Apps, Functions, SQL, API Management, and more. AKS has native kubectl support. |

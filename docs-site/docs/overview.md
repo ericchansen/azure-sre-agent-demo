@@ -14,12 +14,14 @@ Conference speakers, technical evangelists, and anyone giving an **AIOps** or **
 
 ## What is Azure SRE Agent?
 
-Azure SRE Agent is an AI-powered site reliability agent that continuously monitors your Azure resources. When something breaks, it:
+Azure SRE Agent is an AI-powered site reliability agent that continuously monitors your Azure resources. The investigation step between "alert fires" and "fix applied" is where most mean time to resolution (MTTR) is lost — SRE Agent compresses that from minutes to seconds. When something breaks, it:
 
 - **Investigates** — correlates metrics, logs, traces, and deployment history ([root cause analysis](https://sre.azure.com/docs/capabilities/root-cause-analysis))
 - **Understands code** — maps Azure resources back to GitHub source code via [Deep Context](https://sre.azure.com/docs/concepts/workspace-tools)
 - **Remediates** — proposes or executes corrective actions depending on [run mode](https://sre.azure.com/docs/concepts/run-modes)
 - **Remembers** — captures every investigation in [persistent memory](https://sre.azure.com/docs/concepts/memory) so it gets smarter over time
+
+SRE Agent also connects to the broader development workflow. When it creates a GitHub Issue with a structured root cause analysis, tools like [GitHub Copilot](https://github.com/features/copilot) can pick up that issue and propose a code fix — closing the loop from detection to remediation to prevention.
 
 > 📖 **Official docs:** [sre.azure.com/docs](https://sre.azure.com/docs/)
 

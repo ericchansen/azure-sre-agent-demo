@@ -175,7 +175,7 @@ gh workflow run "Demo: Reset Checkout" -f environment=<YOUR_GITHUB_ENVIRONMENT>
 3. Switch to **App Insights** — 503s stop, 201s resume
 
 :::tip Speaker notes
-> "We're back. Zero downtime for browsing, and checkout was restored in under two minutes. The agent captured the full investigation in its memory — next time it sees this pattern, it'll resolve it even faster."
+> "We're back. Zero downtime for browsing, and checkout was restored in under two minutes. The agent captured the full investigation — root cause, evidence, resolution steps — in its persistent memory. That means institutional knowledge compounds over time instead of living in one engineer's head. Next time it sees this pattern, it'll resolve it even faster."
 :::
 
 ---
@@ -186,7 +186,7 @@ Use these throughout the demo or in Q&A:
 
 ### "How is this different from just an alert?"
 
-> An alert tells you *something* is wrong. The SRE Agent tells you *what* is wrong, *why* it happened, and *how to fix it*. It correlates across metrics, logs, traces, deployments, and source code — the same investigation that takes an on-call engineer 15–30 minutes happens in seconds.
+> An alert tells you *something* is wrong. The SRE Agent tells you *what* is wrong, *why* it happened, and *how to fix it*. It correlates across metrics, logs, traces, deployments, and source code — the same investigation that takes an on-call engineer 15–30 minutes happens in seconds. That investigation step is where most mean time to resolution (MTTR) is lost, and SRE Agent compresses it dramatically.
 
 ### "What if I don't trust it to act?"
 
