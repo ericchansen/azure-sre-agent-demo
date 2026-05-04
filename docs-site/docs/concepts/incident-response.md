@@ -10,7 +10,8 @@ description: How Azure SRE Agent detects, investigates, and remediates incidents
 
 ## The problem
 
-When an alert fires at 3 AM, the on-call engineer has to:
+Detection isn't the bottleneck — investigation is. When an alert fires at 3 AM, the on-call engineer has to:
+
 1. Open the incident platform to see what's wrong
 2. Switch to metrics dashboards
 3. Open Log Analytics for errors
@@ -18,7 +19,9 @@ When an alert fires at 3 AM, the on-call engineer has to:
 5. Search Slack/Teams for context
 6. Find a runbook that may be outdated
 
-**Azure SRE Agent does all of this in seconds.**
+This manual investigation is where most **mean time to resolution (MTTR)** is lost. The alert fires in seconds, but the human response — context switching, correlating data across tools, forming hypotheses — takes minutes to hours.
+
+**Azure SRE Agent compresses that investigation from minutes to seconds.**
 
 ## How it works
 
@@ -35,6 +38,8 @@ Alert fires
 The agent doesn't follow a static script — it **reasons** about your specific situation, adapting its investigation based on what it finds.
 
 ## What makes it different
+
+You likely already have monitoring dashboards, runbooks, and automation scripts covering parts of this workflow. Here's how SRE Agent compares:
 
 | | Runbooks | Dashboards | Scripts | SRE Agent |
 |--|---------|-----------|---------|-----------|
