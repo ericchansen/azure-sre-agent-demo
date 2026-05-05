@@ -37,7 +37,7 @@ Ensure access to the following Azure resources before starting investigation:
                            ▼
                     ┌──────────────────┐
                     │appi-webstore-    │
-                    │staging           │
+                    │prod              │
                     │(App Insights)    │
                     └──────────────────┘
 ```
